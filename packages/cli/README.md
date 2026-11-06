@@ -82,7 +82,8 @@ placeholder route:
    npx droneroute mission.kmz --dir ~/rc2 --replace   # mounted with jmtpfs
    ```
 
-   Or name the route directly: `--replace <uuid>` (the folder name in
+   Put `--replace` after the file name (`--replace mission.kmz` would read the
+   file name as a route id). Or name the route directly: `--replace <uuid>` (the folder name in
    `Android/data/dji.go.v5/files/waypoint/`).
 
 3. Restart DJI Fly and open the placeholder route; it now holds your mission.

@@ -11,6 +11,8 @@ import { WAYPOINT_PATH } from "./constants.js";
 import { isAdbAvailable } from "./adb.js";
 import { select } from "@inquirer/prompts";
 import {
+  ReplaceError,
+  findRoute,
   isMissionUuid,
   listRoutes,
   replaceRoute,
@@ -212,12 +214,10 @@ program
 
       // ── Replace a placeholder route ─────────────────────────────────
       if (opts.replace) {
-        const routes = listRoutes(device);
         let route: ExistingRoute | undefined;
+        const routes = replaceUuid ? [] : listRoutes(device);
         if (replaceUuid) {
-          route = routes.find(
-            (r) => r.uuid.toUpperCase() === replaceUuid.toUpperCase(),
-          );
+          route = findRoute(device, replaceUuid);
           if (!route) {
             console.error(
               chalk.red(`\nNo DJI Fly route ${replaceUuid} on the controller.`),
@@ -271,6 +271,16 @@ program
           );
         } catch (err: any) {
           console.error(chalk.red(`\nReplace failed: ${err.message}`));
+          if (err instanceof ReplaceError && err.backupPath) {
+            console.error(
+              err.restored
+                ? chalk.dim("  The placeholder was restored.")
+                : chalk.yellow(
+                    "  The placeholder could not be restored; copy the original back by hand.",
+                  ),
+            );
+            console.error(chalk.dim(`  Original saved to ${err.backupPath}`));
+          }
           process.exit(1);
         }
         return;

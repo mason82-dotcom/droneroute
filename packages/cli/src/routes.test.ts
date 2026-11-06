@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import {
   isMissionUuid,
+  findRoute,
   listMountedRoutes,
   parseAdbStat,
   replaceRoute,
@@ -99,5 +100,36 @@ describe("replaceRoute", () => {
     expect(fs.readFileSync(result.backupPath, "utf-8")).toBe("placeholder");
     expect(path.dirname(result.backupPath)).toBe(backups);
     expect(result.uuid).toBe(OLD);
+  });
+});
+
+describe("replaceRoute failures", () => {
+  it("does not touch the controller when the new file is missing", () => {
+    const target = addRoute(OLD, "placeholder", new Date("2026-01-01"));
+    const backups = path.join(tmp, "backups");
+    const [route] = listMountedRoutes(waypoints);
+    expect(() =>
+      replaceRoute(
+        { type: "mounted", label: "test", waypointPath: waypoints },
+        route,
+        path.join(tmp, "missing.kmz"),
+        backups,
+      ),
+    ).toThrow();
+    expect(fs.readFileSync(target, "utf-8")).toBe("placeholder");
+    expect(fs.existsSync(backups)).toBe(false);
+  });
+});
+
+describe("findRoute", () => {
+  it("finds a mounted route by id in any case", () => {
+    addRoute(OLD, "placeholder", new Date("2026-01-01"));
+    const device = {
+      type: "mounted" as const,
+      label: "test",
+      waypointPath: waypoints,
+    };
+    expect(findRoute(device, OLD.toLowerCase())?.uuid).toBe(OLD);
+    expect(findRoute(device, NEW)).toBeUndefined();
   });
 });

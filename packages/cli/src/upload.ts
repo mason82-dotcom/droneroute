@@ -10,7 +10,7 @@ export interface UploadResult {
   remotePath: string;
 }
 
-/** A fresh mission id and the matching file name DJI Fly expects. */
+/** A mission id (a fresh one unless given) and the file name DJI Fly expects. */
 function newMission(uuid = randomUUID().toUpperCase()): {
   uuid: string;
   fileName: string;
@@ -28,12 +28,11 @@ export function writeMissionFolder(
   kmzPath: string,
   uuid?: string,
 ): UploadResult {
-  const mission = newMission(uuid);
-  const { fileName } = mission;
-  uuid = mission.uuid;
-  const missionDir = path.join(dir, uuid);
+  const { uuid: id, fileName } = newMission(uuid?.toUpperCase());
+  const missionDir = path.join(dir, id);
   const dest = path.join(missionDir, fileName);
   const data = fs.readFileSync(kmzPath);
+  const existed = fs.existsSync(missionDir);
 
   fs.mkdirSync(missionDir, { recursive: true });
   try {
@@ -41,12 +40,13 @@ export function writeMissionFolder(
     // copy_file_range fast path.
     fs.writeFileSync(dest, data);
   } catch (err) {
-    // Do not leave an empty or truncated route behind in DJI Fly.
-    fs.rmSync(missionDir, { recursive: true, force: true });
+    // Do not leave an empty or truncated route behind in DJI Fly, but never
+    // delete a folder that was there before.
+    if (!existed) fs.rmSync(missionDir, { recursive: true, force: true });
     throw err;
   }
 
-  return { uuid, remotePath: dest };
+  return { uuid: id, remotePath: dest };
 }
 
 /**
