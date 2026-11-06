@@ -16,6 +16,8 @@ interface AuthState {
   /** Silent sign-in from a trusted network; false when not allowed. */
   trustedLogin: () => Promise<boolean>;
   logout: () => void;
+  /** Drop an expired/invalid session without clearing the current mission. */
+  expireSession: () => void;
   restore: () => void;
   setNeedsVerification: (value: boolean) => void;
 }
@@ -144,6 +146,14 @@ export const useAuthStore = create<AuthState>((set) => ({
       needsVerification: false,
     });
     useMissionStore.getState().clearMission();
+  },
+
+  expireSession: () => {
+    localStorage.removeItem("droneroute_token");
+    localStorage.removeItem("droneroute_email");
+    localStorage.removeItem("droneroute_is_admin");
+    localStorage.removeItem("droneroute_trusted");
+    set({ token: null, email: null, userId: null, isAdmin: false });
   },
 
   restore: () => {

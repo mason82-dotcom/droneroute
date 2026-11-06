@@ -1,10 +1,15 @@
 import type { AdminUser, PaginatedResponse } from "@droneroute/shared";
 import { useMissionStore } from "@/store/missionStore";
 import { useAuthStore } from "@/store/authStore";
+import { useConfigStore } from "@/store/configStore";
 
 const API_BASE = "/api";
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+async function request<T>(
+  path: string,
+  options?: RequestInit,
+  isRetry = false,
+): Promise<T> {
   const token = localStorage.getItem("droneroute_token");
   const headers: Record<string, string> = {
     ...(options?.headers as Record<string, string>),
@@ -25,6 +30,21 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
 
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
+
+    // Expired or invalid session (e.g. JWT expired, server secret changed):
+    // drop it instead of failing every request with "invalid or expired
+    // token". In a trusted network sign in again silently and retry once.
+    if (res.status === 401 && token && !path.startsWith("/auth/")) {
+      useAuthStore.getState().expireSession();
+      if (
+        !isRetry &&
+        useConfigStore.getState().trustedLogin &&
+        (await useAuthStore.getState().trustedLogin())
+      ) {
+        return request<T>(path, options, true);
+      }
+      throw new Error("Your session has expired. Please sign in again.");
+    }
 
     // Handle banned user — force logout
     if (res.status === 403 && err.banned) {

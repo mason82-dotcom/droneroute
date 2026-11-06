@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from "react";
+import { sha256Hex } from "@/lib/sha256";
 import { toast } from "sonner";
 import {
   Download,
@@ -233,15 +234,17 @@ export default function App() {
       setGravatarUrl(null);
       return;
     }
-    const trimmed = userEmail.trim().toLowerCase();
-    crypto.subtle
-      .digest("SHA-256", new TextEncoder().encode(trimmed))
-      .then((buf) => {
-        const hex = Array.from(new Uint8Array(buf))
-          .map((b) => b.toString(16).padStart(2, "0"))
-          .join("");
+    let cancelled = false;
+    // sha256Hex falls back to plain JS where crypto.subtle is missing
+    // (self-hosted over plain HTTP), which used to crash the whole app.
+    sha256Hex(userEmail.trim().toLowerCase()).then((hex) => {
+      if (!cancelled) {
         setGravatarUrl(`https://www.gravatar.com/avatar/${hex}?s=64&d=mp`);
-      });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
   }, [userEmail]);
 
   const toggleSection = (section: SidebarSection) => {
