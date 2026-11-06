@@ -1,4 +1,4 @@
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { NumericInput } from "@/components/ui/numeric-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -31,7 +31,12 @@ import type {
   FacadeParams,
   PencilParams,
 } from "@/lib/templates";
-import type { PointOfInterest } from "@droneroute/shared";
+import type {
+  DroneModel,
+  PayloadModel,
+  PointOfInterest,
+} from "@droneroute/shared";
+import { computeOrthoPlan } from "@droneroute/shared";
 
 interface TemplateConfigPanelProps {
   type: TemplateType;
@@ -47,6 +52,8 @@ interface TemplateConfigPanelProps {
   onCancel: () => void;
   waypointCount: number;
   pois?: PointOfInterest[];
+  /** Mission drone and payload, for the orthomosaic camera profile. */
+  missionModel?: { drone: DroneModel; payload: PayloadModel };
 }
 
 export function TemplateConfigPanel({
@@ -63,8 +70,27 @@ export function TemplateConfigPanel({
   onCancel,
   waypointCount,
   pois,
+  missionModel,
 }: TemplateConfigPanelProps) {
   const unitSystem = usePreferencesStore((s) => s.preferences.unitSystem);
+  // The pilot confirms the camera model once per model; changing the mission
+  // aircraft asks again.
+  const modelKey = missionModel
+    ? `${missionModel.drone.label}/${missionModel.payload.label}`
+    : "";
+  const [confirmedModel, setConfirmedModel] = useState<string | null>(null);
+  const camera = missionModel?.payload.camera;
+  const orthoActive = type === "grid" && !!gridParams?.orthoMode;
+  const orthoPlan =
+    orthoActive && camera && gridParams
+      ? computeOrthoPlan(
+          camera,
+          gridParams.altitude,
+          gridParams.frontOverlap,
+          gridParams.sideOverlap,
+        )
+      : null;
+  const applyBlocked = orthoActive && (!camera || confirmedModel !== modelKey);
   const title =
     type === "orbit"
       ? "Orbit"
@@ -235,7 +261,12 @@ export function TemplateConfigPanel({
               Line spacing ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
-              value={toDisplayDistance(gridParams.spacingM, unitSystem)}
+              value={toDisplayDistance(
+                orthoPlan
+                  ? Math.round(orthoPlan.lineSpacingM * 10) / 10
+                  : gridParams.spacingM,
+                unitSystem,
+              )}
               onChange={(v) =>
                 onGridChange({
                   ...gridParams,
@@ -245,6 +276,7 @@ export function TemplateConfigPanel({
               min={3}
               step={5}
               fallback={30}
+              disabled={gridParams.orthoMode}
               className="h-7 text-xs"
             />
           </div>
@@ -264,7 +296,8 @@ export function TemplateConfigPanel({
             <label className="flex items-center gap-1.5 text-xs cursor-pointer">
               <input
                 type="checkbox"
-                checked={gridParams.addPhotos}
+                checked={gridParams.addPhotos || gridParams.orthoMode}
+                disabled={gridParams.orthoMode}
                 onChange={(e) =>
                   onGridChange({ ...gridParams, addPhotos: e.target.checked })
                 }
@@ -284,6 +317,98 @@ export function TemplateConfigPanel({
               Reverse
             </label>
           </div>
+          <label className="col-span-2 flex items-center gap-1.5 text-xs cursor-pointer">
+            <input
+              type="checkbox"
+              checked={gridParams.orthoMode}
+              onChange={(e) =>
+                onGridChange({ ...gridParams, orthoMode: e.target.checked })
+              }
+              className="rounded"
+            />
+            Orthomosaic mode (spacing from camera and overlap)
+          </label>
+          {gridParams.orthoMode && (
+            <>
+              <div>
+                <Label className="text-[10px]">Front overlap (%)</Label>
+                <NumericInput
+                  value={gridParams.frontOverlap}
+                  onChange={(v) =>
+                    onGridChange({ ...gridParams, frontOverlap: v })
+                  }
+                  min={0}
+                  max={95}
+                  step={5}
+                  fallback={80}
+                  integer
+                  className="h-7 text-xs"
+                />
+              </div>
+              <div>
+                <Label className="text-[10px]">Side overlap (%)</Label>
+                <NumericInput
+                  value={gridParams.sideOverlap}
+                  onChange={(v) =>
+                    onGridChange({ ...gridParams, sideOverlap: v })
+                  }
+                  min={0}
+                  max={95}
+                  step={5}
+                  fallback={70}
+                  integer
+                  className="h-7 text-xs"
+                />
+              </div>
+              {!camera ? (
+                <p className="col-span-2 text-[10px] text-orange-400">
+                  {missionModel
+                    ? `No camera profile for ${missionModel.payload.label}.`
+                    : "The mission aircraft is unknown."}{" "}
+                  Choose a drone and payload with a mapping camera in mission
+                  settings.
+                </p>
+              ) : (
+                <>
+                  <label className="col-span-2 flex items-start gap-1.5 text-[10px] cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={confirmedModel === modelKey}
+                      onChange={(e) =>
+                        setConfirmedModel(e.target.checked ? modelKey : null)
+                      }
+                      className="rounded mt-0.5"
+                    />
+                    <span>
+                      I fly the {missionModel!.drone.label} with the{" "}
+                      {missionModel!.payload.label} (camera profile used for the
+                      spacing)
+                    </span>
+                  </label>
+                  {orthoPlan && (
+                    <dl className="col-span-2 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
+                      <dt>Photo spacing</dt>
+                      <dd className="text-right text-foreground">
+                        {toDisplayDistance(
+                          orthoPlan.photoSpacingM,
+                          unitSystem,
+                        ).toFixed(1)}{" "}
+                        {distanceLabel(unitSystem)}
+                      </dd>
+                      <dt>Ground resolution</dt>
+                      <dd className="text-right text-foreground">
+                        {orthoPlan.gsdCm.toFixed(2)} cm/px
+                      </dd>
+                      <dt>Estimated photos</dt>
+                      <dd className="text-right text-foreground">
+                        {waypointCount}
+                      </dd>
+                    </dl>
+                  )}
+                </>
+              )}
+            </>
+          )}
         </div>
       )}
 
@@ -509,6 +634,12 @@ export function TemplateConfigPanel({
         <Button
           size="sm"
           onClick={onApply}
+          disabled={applyBlocked}
+          title={
+            applyBlocked
+              ? "Confirm the aircraft and camera for orthomosaic mode"
+              : undefined
+          }
           className="flex-1 h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
         >
           <Check className="h-3 w-3 mr-1" />

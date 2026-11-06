@@ -10,6 +10,7 @@ interface NumericInputProps {
   step?: number;
   fallback: number;
   integer?: boolean;
+  disabled?: boolean;
   className?: string;
 }
 
@@ -25,6 +26,7 @@ export function NumericInput({
   step,
   fallback,
   integer,
+  disabled,
   className,
 }: NumericInputProps) {
   const [localValue, setLocalValue] = useState(String(value));
@@ -65,6 +67,7 @@ export function NumericInput({
       min={min}
       max={max}
       step={step}
+      disabled={disabled}
       className={className}
     />
   );

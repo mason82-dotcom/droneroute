@@ -1,9 +1,10 @@
 import type {
+  CameraProfile,
   Waypoint,
   PointOfInterest,
   WaypointAction,
 } from "@droneroute/shared";
-import { DEFAULT_WAYPOINT } from "@droneroute/shared";
+import { DEFAULT_WAYPOINT, computeOrthoPlan } from "@droneroute/shared";
 
 // ── Helpers ──────────────────────────────────────────────
 
@@ -91,6 +92,12 @@ export interface GridParams {
   addPhotos: boolean;
   rotationDeg: number; // rotation of the grid in degrees (0-360)
   reverse: boolean; // fly the grid in reverse order
+  /** Orthomosaic mode: spacing from camera footprint and overlaps. */
+  orthoMode: boolean;
+  frontOverlap: number; // % overlap between photos on a line
+  sideOverlap: number; // % overlap between neighbouring lines
+  /** Camera of the mission payload; orthomosaic mode needs it. */
+  camera?: CameraProfile;
 }
 
 export interface FacadeParams {
@@ -140,6 +147,9 @@ export const DEFAULT_GRID_PARAMS: Omit<GridParams, "corner1" | "corner2"> = {
   addPhotos: true,
   rotationDeg: 0,
   reverse: false,
+  orthoMode: false,
+  frontOverlap: 80,
+  sideOverlap: 70,
 };
 
 export const DEFAULT_FACADE_PARAMS: Omit<FacadeParams, "point1" | "point2"> = {
@@ -222,7 +232,16 @@ export function generateGrid(params: GridParams): TemplateResult {
     addPhotos,
     rotationDeg,
     reverse,
+    orthoMode,
+    frontOverlap,
+    sideOverlap,
+    camera,
   } = params;
+  const ortho =
+    orthoMode && camera
+      ? computeOrthoPlan(camera, altitude, frontOverlap, sideOverlap)
+      : null;
+  const lineSpacingM = ortho ? ortho.lineSpacingM : spacingM;
   const [lat1, lng1] = corner1;
   const [lat2, lng2] = corner2;
 
@@ -247,7 +266,15 @@ export function generateGrid(params: GridParams): TemplateResult {
 
   // Number of passes
   const crossAxisDist = flyEW ? heightM : widthM;
-  const numPasses = Math.max(2, Math.ceil(crossAxisDist / spacingM) + 1);
+  const numPasses = Math.max(2, Math.ceil(crossAxisDist / lineSpacingM) + 1);
+
+  // Photo positions per pass: both ends, plus evenly spaced points in
+  // orthomosaic mode so the front overlap is met.
+  const passLength = flyEW ? widthM : heightM;
+  const pointsPerPass = ortho
+    ? Math.max(2, Math.ceil(passLength / ortho.photoSpacingM) + 1)
+    : 2;
+  const withPhoto = addPhotos || ortho !== null;
 
   const takePhotoAction: WaypointAction = {
     actionId: 0,
@@ -300,34 +327,25 @@ export function generateGrid(params: GridParams): TemplateResult {
       wpLng2 = lng;
     }
 
-    // Apply rotation
-    const [rLat1, rLng1] = rotatePoint(wpLat1, wpLng1);
-    const [rLat2, rLng2] = rotatePoint(wpLat2, wpLng2);
-
-    waypoints.push({
-      ...DEFAULT_WAYPOINT,
-      latitude: rLat1,
-      longitude: rLng1,
-      height: altitude,
-      gimbalPitchAngle: -90,
-      useGlobalHeadingParam: false,
-      headingMode: "followWayline",
-      turnMode: "toPointAndStopWithContinuityCurvature",
-      useGlobalTurnParam: false,
-      actions: addPhotos ? [{ ...takePhotoAction, actionId: 0 }] : [],
-    });
-    waypoints.push({
-      ...DEFAULT_WAYPOINT,
-      latitude: rLat2,
-      longitude: rLng2,
-      height: altitude,
-      gimbalPitchAngle: -90,
-      useGlobalHeadingParam: false,
-      headingMode: "followWayline",
-      turnMode: "toPointAndStopWithContinuityCurvature",
-      useGlobalTurnParam: false,
-      actions: addPhotos ? [{ ...takePhotoAction, actionId: 0 }] : [],
-    });
+    for (let i = 0; i < pointsPerPass; i++) {
+      const t = i / (pointsPerPass - 1);
+      const [lat, lng] = rotatePoint(
+        wpLat1 + t * (wpLat2 - wpLat1),
+        wpLng1 + t * (wpLng2 - wpLng1),
+      );
+      waypoints.push({
+        ...DEFAULT_WAYPOINT,
+        latitude: lat,
+        longitude: lng,
+        height: altitude,
+        gimbalPitchAngle: -90,
+        useGlobalHeadingParam: false,
+        headingMode: "followWayline",
+        turnMode: "toPointAndStopWithContinuityCurvature",
+        useGlobalTurnParam: false,
+        actions: withPhoto ? [{ ...takePhotoAction, actionId: 0 }] : [],
+      });
+    }
   }
 
   if (reverse) {

@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { Source, Layer, Marker, useMap } from "react-map-gl/maplibre";
 import { useMissionStore } from "@/store/missionStore";
+import { findMissionModel } from "@droneroute/shared";
 import { TemplateConfigPanel } from "./TemplateConfigPanel";
 import { TemplatePreview } from "./TemplatePreview";
 import type {
@@ -64,6 +65,12 @@ export function TemplateDrawHandler() {
   const templateMode = useMissionStore((s) => s.templateMode);
   const setTemplateMode = useMissionStore((s) => s.setTemplateMode);
   const appendWaypoints = useMissionStore((s) => s.appendWaypoints);
+  const missionConfig = useMissionStore((s) => s.config);
+  const missionModel = useMemo(
+    () => findMissionModel(missionConfig),
+    [missionConfig],
+  );
+  const camera = missionModel?.payload.camera;
   const { current: map } = useMap();
 
   const [dragging, setDragging] = useState(false);
@@ -172,10 +179,10 @@ export function TemplateDrawHandler() {
 
   const preview: TemplateResult | null = useMemo(() => {
     if (orbitParams) return generateOrbit(orbitParams);
-    if (gridParams) return generateGrid(gridParams);
+    if (gridParams) return generateGrid({ ...gridParams, camera });
     if (facadeParams) return generateFacade(facadeParams);
     return null;
-  }, [orbitParams, gridParams, facadeParams]);
+  }, [orbitParams, gridParams, facadeParams, camera]);
 
   const dragPreview = useMemo(() => {
     if (!dragging || !dragState || !templateMode) return null;
@@ -359,6 +366,7 @@ export function TemplateDrawHandler() {
           onApply={handleApply}
           onCancel={handleCancel}
           waypointCount={activePreview?.waypoints.length ?? 0}
+          missionModel={missionModel}
         />
       )}
     </>
