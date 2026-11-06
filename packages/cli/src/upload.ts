@@ -11,17 +11,26 @@ export interface UploadResult {
 }
 
 /** A fresh mission id and the matching file name DJI Fly expects. */
-function newMission(): { uuid: string; fileName: string } {
-  const uuid = randomUUID().toUpperCase();
+function newMission(uuid = randomUUID().toUpperCase()): {
+  uuid: string;
+  fileName: string;
+} {
   return { uuid, fileName: `${uuid}${KMZ_EXTENSION}` };
 }
 
 /**
  * Create a new mission slot in a DJI Fly waypoint directory (or any folder):
  * `<dir>/<UUID>/<UUID>.KMZ`, the layout DJI Fly picks up as a new mission.
+ * Pass `uuid` to reuse the id of an existing placeholder route.
  */
-export function writeMissionFolder(dir: string, kmzPath: string): UploadResult {
-  const { uuid, fileName } = newMission();
+export function writeMissionFolder(
+  dir: string,
+  kmzPath: string,
+  uuid?: string,
+): UploadResult {
+  const mission = newMission(uuid);
+  const { fileName } = mission;
+  uuid = mission.uuid;
   const missionDir = path.join(dir, uuid);
   const dest = path.join(missionDir, fileName);
   const data = fs.readFileSync(kmzPath);

@@ -26,3 +26,15 @@ describe("writeMissionFolder", () => {
     expect(fs.readFileSync(result.remotePath, "utf-8")).toBe("PK-test");
   });
 });
+
+describe("writeMissionFolder with a placeholder id", () => {
+  it("reuses the given UUID", () => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "droneroute-cli-"));
+    const kmz = path.join(tmp, "mission.kmz");
+    fs.writeFileSync(kmz, "PK");
+    const uuid = "11111111-2222-3333-4444-555555555555";
+    const result = writeMissionFolder(path.join(tmp, "out"), kmz, uuid);
+    expect(result.uuid).toBe(uuid);
+    expect(result.remotePath).toBe(path.join(tmp, "out", uuid, `${uuid}.KMZ`));
+  });
+});

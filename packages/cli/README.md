@@ -68,12 +68,36 @@ mission.kmz` finds it automatically.
   `Android/data/dji.go.v5/files/waypoint/` on the controller with File Explorer
   (Windows) or [OpenMTP](https://openmtp.ganeshrvel.com/) (macOS).
 
+### If the route does not appear in DJI Fly
+
+Some DJI Fly versions only list routes they created themselves. Then use a
+placeholder route:
+
+1. In DJI Fly, create and save a short route (any waypoints).
+2. Run the tool with `--replace`. It lists the routes on the controller, newest
+   first; pick the placeholder you just saved:
+
+   ```bash
+   npx droneroute mission.kmz --replace
+   npx droneroute mission.kmz --dir ~/rc2 --replace   # mounted with jmtpfs
+   ```
+
+   Or name the route directly: `--replace <uuid>` (the folder name in
+   `Android/data/dji.go.v5/files/waypoint/`).
+
+3. Restart DJI Fly and open the placeholder route; it now holds your mission.
+
+The original KMZ is saved to `~/.droneroute/backups/` first. On macOS and
+Windows, `--out ./export --replace <uuid>` writes the folder under the
+placeholder's id, so copying it over replaces the placeholder's file.
+
 ## Options
 
-| Option               | Description                                                                   |
-| -------------------- | ----------------------------------------------------------------------------- |
-| `-d, --dir <path>`   | Use controller storage mounted at `<path>` instead of searching for devices.  |
-| `-o, --out <folder>` | Write the `<UUID>/<UUID>.KMZ` mission folder to `<folder>` for a manual copy. |
+| Option                 | Description                                                                                                          |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `-d, --dir <path>`     | Use controller storage mounted at `<path>` instead of searching for devices.                                         |
+| `-o, --out <folder>`   | Write the `<UUID>/<UUID>.KMZ` mission folder to `<folder>` for a manual copy.                                        |
+| `-r, --replace [uuid]` | Overwrite an existing DJI Fly route (placeholder) instead of adding a new one; without `<uuid>`, choose from a list. |
 
 ## Creating KMZ missions
 
@@ -130,6 +154,7 @@ mission in the waypoint list.
 | Permission denied on waypoint path  | Enable USB debugging on the controller: Settings > Developer Options > USB Debugging.                              |
 | Controller not detected by adb      | Try a different USB cable or port. Enable "File Transfer" mode when the USB dialog appears on the controller.      |
 | Mission doesn't appear in DJI Fly   | Open the waypoint mission list and scroll — new missions appear at the end. Tap on it to load it into the editor.  |
+| Route not listed in DJI Fly         | Save a placeholder route in DJI Fly and run again with `--replace` (see above).                                    |
 | DJI RC 2 not found                  | It has no USB debugging. Use MTP: open it in the file manager (Linux), `--dir`, or `--out` (macOS / Windows).      |
 | SD card method: directory not found | The waypoint directory is only created after you save at least one waypoint mission via DJI Fly on the controller. |
 
