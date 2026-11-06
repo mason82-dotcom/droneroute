@@ -223,6 +223,12 @@ export async function parseKmz(buffer: Buffer): Promise<{
       headingAngle,
       turnMode: turnMode as any,
       turnDampingDist,
+      // Missing in older files: treat as straight (DroneRoute's default).
+      useStraightLine:
+        pm["wpml:useStraightLine"] == null
+          ? undefined
+          : pm["wpml:useStraightLine"] === "1" ||
+            pm["wpml:useStraightLine"] === 1,
       poiId,
       actions,
     };

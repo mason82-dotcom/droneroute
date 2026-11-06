@@ -240,6 +240,13 @@ export interface Waypoint {
   poiId?: string; // Reference to PointOfInterest when headingMode = "towardPOI"
   turnMode?: TurnMode;
   turnDampingDist?: number;
+  /**
+   * Segment to the next waypoint as close to a straight line as possible
+   * (WPML `useStraightLine`). Defaults to straight; set to false for a curved
+   * segment. DJI requires it for the *ContinuityCurvature turn modes and
+   * draws/flies those segments curved when it is missing.
+   */
+  useStraightLine?: boolean;
   gimbalPitchAngle: number;
   actions: WaypointAction[];
 }

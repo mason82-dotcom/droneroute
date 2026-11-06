@@ -206,6 +206,8 @@ export function generateOrbit(params: OrbitParams): TemplateResult {
       gimbalPitchAngle: gimbalPitch,
       turnMode: "toPointAndPassWithContinuityCurvature",
       useGlobalTurnParam: false,
+      // An orbit is meant to be flown as a smooth circle between its points.
+      useStraightLine: false,
       actions: [],
     });
   }

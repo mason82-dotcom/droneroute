@@ -8,6 +8,11 @@ import type {
 
 // ── XML Helpers ──────────────────────────────────────────
 
+/** WPML useStraightLine value of a waypoint: straight unless explicitly curved. */
+function straightLine(wp: Waypoint): 0 | 1 {
+  return wp.useStraightLine === false ? 0 : 1;
+}
+
 function escapeXml(str: string): string {
   return str
     .replace(/&/g, "&amp;")
@@ -178,6 +183,7 @@ export function buildTemplateKml(mission: Mission): string {
         ${!wp.useGlobalSpeed ? `<wpml:waypointSpeed>${wp.speed}</wpml:waypointSpeed>` : ""}
         <wpml:useGlobalHeadingParam>${wp.useGlobalHeadingParam ? 1 : 0}</wpml:useGlobalHeadingParam>
         <wpml:useGlobalTurnParam>${wp.useGlobalTurnParam ? 1 : 0}</wpml:useGlobalTurnParam>
+        <wpml:useStraightLine>${straightLine(wp)}</wpml:useStraightLine>
         <wpml:gimbalPitchAngle>${wp.gimbalPitchAngle}</wpml:gimbalPitchAngle>${headingOverrideXml}${actionGroupXml}
       </Placemark>`;
     })
@@ -218,7 +224,8 @@ export function buildTemplateKml(mission: Mission): string {
       <wpml:waypointHeadingMode>${c.globalHeadingMode}</wpml:waypointHeadingMode>
       <wpml:waypointHeadingPathMode>followBadArc</wpml:waypointHeadingPathMode>
     </wpml:globalWaypointHeadingParam>
-    <wpml:globalWaypointTurnMode>${c.globalTurnMode}</wpml:globalWaypointTurnMode>${placemarks}
+    <wpml:globalWaypointTurnMode>${c.globalTurnMode}</wpml:globalWaypointTurnMode>
+    <wpml:globalUseStraightLine>1</wpml:globalUseStraightLine>${placemarks}
   </Folder>
 </Document>
 </kml>`;
@@ -276,6 +283,7 @@ export function buildWaylinesWpml(mission: Mission): string {
           <wpml:waypointTurnMode>${turnMode}</wpml:waypointTurnMode>
           <wpml:waypointTurnDampingDist>${wp.turnDampingDist ?? 0}</wpml:waypointTurnDampingDist>
         </wpml:waypointTurnParam>
+        <wpml:useStraightLine>${straightLine(wp)}</wpml:useStraightLine>
         <wpml:gimbalPitchAngle>${wp.gimbalPitchAngle}</wpml:gimbalPitchAngle>${actionGroupXml}
       </Placemark>`;
     })
