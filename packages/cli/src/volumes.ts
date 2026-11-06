@@ -14,51 +14,110 @@ export interface MountedDevice {
 }
 
 /**
+ * Locate the DJI Fly waypoint directory for a user-supplied or detected path.
+ *
+ * Accepts the waypoint directory itself or the storage root that contains
+ * `Android/data/dji.go.v5/files/waypoint`. With `descend`, it also looks one
+ * level down, for device folders above the storage roots (MTP devices expose
+ * e.g. "Internal shared storage"). Returns `null` when nothing is found.
+ */
+export function findWaypointDir(
+  dir: string,
+  { descend = false }: { descend?: boolean } = {},
+): string | null {
+  if (isWaypointPath(dir) && isDirectory(dir)) return dir;
+
+  const direct = path.join(dir, WAYPOINT_PATH);
+  if (isDirectory(direct)) return direct;
+  if (!descend) return null;
+
+  for (const sub of listSubdirs(dir)) {
+    const nested = path.join(sub, WAYPOINT_PATH);
+    if (isDirectory(nested)) return nested;
+  }
+  return null;
+}
+
+/** Whether `p` ends with the DJI Fly waypoint path (whole segments, any case). */
+function isWaypointPath(p: string): boolean {
+  const segments = p.split(/[\\/]+/).filter(Boolean);
+  const expected = WAYPOINT_PATH.split("/");
+  const tail = segments.slice(-expected.length);
+  return (
+    tail.length === expected.length &&
+    tail.every((seg, i) => seg.toLowerCase() === expected[i].toLowerCase())
+  );
+}
+
+/**
  * Scan all plausible mount points for volumes that contain the DJI
  * waypoint directory structure.
  */
-export function findMountedDevices(): MountedDevice[] {
-  const roots = getMountRoots();
+export function findMountedDevices(
+  roots: { path: string; kind: "volume" | "mtp" }[] = getMountRoots(),
+): MountedDevice[] {
   const devices: MountedDevice[] = [];
 
   for (const root of roots) {
-    const waypointPath = path.join(root, WAYPOINT_PATH);
+    const waypointPath = findWaypointDir(root.path, {
+      descend: root.kind === "mtp",
+    });
+    if (!waypointPath) continue;
 
-    try {
-      const stat = fs.statSync(waypointPath);
-      if (stat.isDirectory()) {
-        const name = path.basename(root);
-        devices.push({
-          label: `${name} (${root})`,
-          waypointPath,
-          mountPoint: root,
-        });
-      }
-    } catch {
-      // Path doesn't exist — skip
-    }
+    const name = path.basename(root.path);
+    devices.push({
+      label:
+        root.kind === "mtp"
+          ? `MTP device ${mtpName(name)} (${root.path})`
+          : `${name} (${root.path})`,
+      waypointPath,
+      mountPoint: root.path,
+    });
   }
 
   return devices;
 }
 
+/** Readable name from a GVFS MTP folder such as "mtp:host=DJI_RC_2_1234". */
+function mtpName(folder: string): string {
+  let host = folder.replace(/^mtp:host=/, "");
+  try {
+    host = decodeURIComponent(host);
+  } catch {
+    // Keep the raw name if it is not valid percent-encoding.
+  }
+  return host.replace(/_/g, " ");
+}
+
 /**
  * Return a list of mount-point roots to probe, depending on the platform.
  */
-function getMountRoots(): string[] {
+function getMountRoots(): { path: string; kind: "volume" | "mtp" }[] {
   const platform = os.platform();
+  const volumes = (dirs: string[]) =>
+    dirs.map((p) => ({ path: p, kind: "volume" as const }));
 
   if (platform === "darwin") {
-    return listSubdirs("/Volumes");
+    return volumes(listSubdirs("/Volumes"));
   }
 
   if (platform === "linux") {
     const user = os.userInfo().username;
+    const uid = os.userInfo().uid;
     return [
-      ...listSubdirs("/media"),
-      ...listSubdirs(`/media/${user}`),
-      ...listSubdirs("/mnt"),
-      ...listSubdirs(`/run/media/${user}`),
+      ...volumes([
+        // /media/<user> is a parent of mounts, not a mount itself.
+        ...listSubdirs("/media").filter((p) => path.basename(p) !== user),
+        ...listSubdirs(`/media/${user}`),
+        ...listSubdirs("/mnt"),
+        ...listSubdirs(`/run/media/${user}`),
+      ]),
+      // MTP devices mounted by GVFS (GNOME, Xfce, Cinnamon, …) when the
+      // controller is connected in "file transfer" mode. Controllers without
+      // USB debugging (e.g. DJI RC 2) are only reachable this way.
+      ...listSubdirs(`/run/user/${uid}/gvfs`)
+        .filter((p) => path.basename(p).startsWith("mtp:"))
+        .map((p) => ({ path: p, kind: "mtp" as const })),
     ];
   }
 
@@ -74,10 +133,18 @@ function getMountRoots(): string[] {
         // Drive not available
       }
     }
-    return drives;
+    return volumes(drives);
   }
 
   return [];
+}
+
+function isDirectory(p: string): boolean {
+  try {
+    return fs.statSync(p).isDirectory();
+  } catch {
+    return false;
+  }
 }
 
 /**

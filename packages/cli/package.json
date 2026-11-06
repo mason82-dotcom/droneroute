@@ -31,7 +31,8 @@
   },
   "homepage": "https://droneroute.io",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "test": "vitest run"
   },
   "dependencies": {
     "commander": "^15.0.0",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "typescript": "^6.0.3",
-    "@types/node": "^25.9.1"
+    "@types/node": "^25.9.1",
+    "vitest": "^4.1.9"
   }
 }

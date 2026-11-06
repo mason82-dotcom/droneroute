@@ -10,6 +10,36 @@ export interface UploadResult {
   remotePath: string;
 }
 
+/** A fresh mission id and the matching file name DJI Fly expects. */
+function newMission(): { uuid: string; fileName: string } {
+  const uuid = randomUUID().toUpperCase();
+  return { uuid, fileName: `${uuid}${KMZ_EXTENSION}` };
+}
+
+/**
+ * Create a new mission slot in a DJI Fly waypoint directory (or any folder):
+ * `<dir>/<UUID>/<UUID>.KMZ`, the layout DJI Fly picks up as a new mission.
+ */
+export function writeMissionFolder(dir: string, kmzPath: string): UploadResult {
+  const { uuid, fileName } = newMission();
+  const missionDir = path.join(dir, uuid);
+  const dest = path.join(missionDir, fileName);
+  const data = fs.readFileSync(kmzPath);
+
+  fs.mkdirSync(missionDir, { recursive: true });
+  try {
+    // Write instead of copyFile: MTP mounts (GVFS FUSE) may not support the
+    // copy_file_range fast path.
+    fs.writeFileSync(dest, data);
+  } catch (err) {
+    // Do not leave an empty or truncated route behind in DJI Fly.
+    fs.rmSync(missionDir, { recursive: true, force: true });
+    throw err;
+  }
+
+  return { uuid, remotePath: dest };
+}
+
 /**
  * Upload a KMZ file to the selected DJI controller.
  *
@@ -18,25 +48,14 @@ export interface UploadResult {
  * as a new mission.
  */
 export function uploadKmz(device: DjiDevice, kmzPath: string): UploadResult {
-  const uuid = randomUUID().toUpperCase();
-  const filename = `${uuid}${KMZ_EXTENSION}`;
-
   if (device.type === "mounted") {
-    const dir = path.join(device.waypointPath!, uuid);
-    const dest = path.join(dir, filename);
-
-    fs.mkdirSync(dir, { recursive: true });
-    fs.copyFileSync(kmzPath, dest);
-
-    return {
-      uuid,
-      remotePath: dest,
-    };
+    return writeMissionFolder(device.waypointPath!, kmzPath);
   }
 
   // adb device
+  const { uuid, fileName } = newMission();
   const remoteDir = `${ADB_WAYPOINT_PATH}/${uuid}`;
-  const remoteDest = `${remoteDir}/${filename}`;
+  const remoteDest = `${remoteDir}/${fileName}`;
 
   adbMkdir(device.serial!, remoteDir);
   adbPush(device.serial!, kmzPath, remoteDest);

@@ -12,7 +12,7 @@ npx droneroute mission.kmz
 
 ## What it does
 
-1. Detects DJI RC controllers connected via USB or mounted SD cards
+1. Detects DJI RC controllers connected via USB (adb or MTP) or mounted SD cards
 2. If multiple controllers are found, lets you choose one
 3. Creates a new mission slot on the controller
 4. Places the KMZ file so DJI Fly recognizes it immediately
@@ -27,6 +27,8 @@ No need to manually create placeholder missions, browse the filesystem, or renam
   - Linux: `apt install adb`
   - Windows: included with [Android SDK platform-tools](https://developer.android.com/tools/releases/platform-tools)
 - For SD cards: just insert the card into your computer, no extra tools needed
+- For controllers without USB debugging (DJI RC 2, RC-N3): see
+  [Controllers without USB debugging](#controllers-without-usb-debugging-dji-rc-2)
 
 ## Supported controllers
 
@@ -36,6 +38,42 @@ Any DJI controller running DJI Fly with waypoint support:
 - DJI RC 2
 - DJI RC Pro / RC Pro 2
 - DJI RC-N1 / RC-N2
+
+## Controllers without USB debugging (DJI RC 2)
+
+The DJI RC 2 and RC-N3 have no developer options, so adb cannot reach them, and
+DJI Fly keeps waypoint routes in internal storage, not on the SD card. Connect
+the controller via USB and choose **File transfer** (MTP) on it. Create one
+route in DJI Fly first, so the waypoint folder exists.
+
+- **Linux (GNOME, Xfce, Cinnamon, …):** open the controller once in the file
+  manager. GVFS mounts it under `/run/user/<uid>/gvfs/`, and `npx droneroute
+mission.kmz` finds it automatically.
+- **Linux (other mounts):** mount it with `jmtpfs` or `simple-mtpfs` and pass the
+  mount point:
+
+  ```bash
+  jmtpfs ~/rc2
+  npx droneroute mission.kmz --dir ~/rc2
+  ```
+
+- **macOS / Windows:** MTP devices are not mounted as drives, so write the
+  mission folder locally and copy it over:
+
+  ```bash
+  npx droneroute mission.kmz --out ./export
+  ```
+
+  Then copy the created `<UUID>` folder to
+  `Android/data/dji.go.v5/files/waypoint/` on the controller with File Explorer
+  (Windows) or [OpenMTP](https://openmtp.ganeshrvel.com/) (macOS).
+
+## Options
+
+| Option               | Description                                                                   |
+| -------------------- | ----------------------------------------------------------------------------- |
+| `-d, --dir <path>`   | Use controller storage mounted at `<path>` instead of searching for devices.  |
+| `-o, --out <folder>` | Write the `<UUID>/<UUID>.KMZ` mission folder to `<folder>` for a manual copy. |
 
 ## Creating KMZ missions
 
@@ -92,6 +130,7 @@ mission in the waypoint list.
 | Permission denied on waypoint path  | Enable USB debugging on the controller: Settings > Developer Options > USB Debugging.                              |
 | Controller not detected by adb      | Try a different USB cable or port. Enable "File Transfer" mode when the USB dialog appears on the controller.      |
 | Mission doesn't appear in DJI Fly   | Open the waypoint mission list and scroll — new missions appear at the end. Tap on it to load it into the editor.  |
+| DJI RC 2 not found                  | It has no USB debugging. Use MTP: open it in the file manager (Linux), `--dir`, or `--out` (macOS / Windows).      |
 | SD card method: directory not found | The waypoint directory is only created after you save at least one waypoint mission via DJI Fly on the controller. |
 
 ## License
