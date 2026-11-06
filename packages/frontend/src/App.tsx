@@ -85,8 +85,19 @@ export default function App() {
   const [showAbout, setShowAbout] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const { token, email: userEmail, logout, restore, isAdmin } = useAuthStore();
-  const { selfHosted } = useConfigStore();
+  const {
+    token,
+    email: userEmail,
+    logout,
+    restore,
+    isAdmin,
+    trustedLogin,
+  } = useAuthStore();
+  const {
+    selfHosted,
+    loaded: configLoaded,
+    trustedLogin: trustedNetwork,
+  } = useConfigStore();
   const [gravatarUrl, setGravatarUrl] = useState<string | null>(null);
   const [showAccountMenu, setShowAccountMenu] = useState(false);
 
@@ -94,6 +105,16 @@ export default function App() {
   useEffect(() => {
     restore();
   }, []);
+
+  // In a trusted network, sign in silently (and refresh the shared local
+  // session) so nobody is asked for a password there.
+  useEffect(() => {
+    if (!configLoaded || !trustedNetwork) return;
+    const hasOwnAccount =
+      !!localStorage.getItem("droneroute_token") &&
+      localStorage.getItem("droneroute_trusted") !== "true";
+    if (!hasOwnAccount) void trustedLogin();
+  }, [configLoaded, trustedNetwork]);
 
   // Fetch user preferences after auth is restored
   const { fetchPreferences, preferences } = usePreferencesStore();

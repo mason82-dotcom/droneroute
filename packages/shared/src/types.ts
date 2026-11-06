@@ -336,6 +336,52 @@ export interface MapViewState {
   zoom: number;
 }
 
+/** A raster tile layer (XYZ template or WMS GetMap URL with {bbox-epsg-3857}). */
+export interface RasterLayerConfig {
+  tiles: string;
+  attribution: string;
+  /** [west, south, east, north] in degrees; tiles are only requested inside. */
+  bounds?: [number, number, number, number];
+  tileSize: number;
+  maxzoom: number;
+}
+
+/** An additional, selectable base map style. */
+export interface ExtraMapStyle {
+  name: string;
+  url: string;
+}
+
+/**
+ * Map data sources served to the frontend. Everything works without API keys:
+ * MapLibre styles (OpenFreeMap), satellite imagery (Esri World Imagery),
+ * terrain (Mapterhorn) and geocoding (Photon) by default. Self-hosted
+ * instances can swap or add sources via MAP_* environment variables.
+ */
+export interface MapSourcesConfig {
+  /** MapLibre style URL for the street map. */
+  streetStyle: string;
+  /** MapLibre style URL whose label layers are drawn on top of the imagery. */
+  labelsStyle: string;
+  /** TileJSON URL of an OpenMapTiles-schema vector source with buildings. */
+  buildingsTiles: string;
+  /** Satellite imagery covering the whole world. */
+  imagery: RasterLayerConfig;
+  /** Optional higher-resolution orthophotos drawn over the imagery. */
+  orthophoto: RasterLayerConfig | null;
+  /** Optional additional base map style. */
+  extraStyle: ExtraMapStyle | null;
+  terrain: {
+    tiles: string;
+    encoding: "terrarium" | "mapbox";
+    attribution: string;
+    tileSize: number;
+    maxzoom: number;
+  };
+  /** Photon-compatible search endpoint, or null to hide the search box. */
+  geocoderUrl: string | null;
+}
+
 // ── Default Config ───────────────────────────────────────
 
 export const DEFAULT_MISSION_CONFIG: MissionConfig = {
@@ -387,4 +433,29 @@ export const DEFAULT_MAP_VIEW: MapViewState = {
   latitude: 41.3874,
   longitude: 2.1686,
   zoom: 13,
+};
+
+export const DEFAULT_MAP_SOURCES: MapSourcesConfig = {
+  streetStyle: "https://tiles.openfreemap.org/styles/dark",
+  labelsStyle: "https://tiles.openfreemap.org/styles/liberty",
+  buildingsTiles: "https://tiles.openfreemap.org/planet",
+  imagery: {
+    tiles:
+      "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution:
+      "Imagery © Esri, Maxar, Earthstar Geographics, and the GIS User Community",
+    tileSize: 256,
+    maxzoom: 19,
+  },
+  orthophoto: null,
+  extraStyle: null,
+  terrain: {
+    tiles: "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp",
+    encoding: "terrarium",
+    attribution:
+      '<a href="https://mapterhorn.com/attribution">© Mapterhorn</a>',
+    tileSize: 512,
+    maxzoom: 14,
+  },
+  geocoderUrl: "https://photon.komoot.io/api/",
 };

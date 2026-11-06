@@ -1,12 +1,13 @@
 import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { useMap } from "react-map-gl/mapbox";
-import mapboxgl from "mapbox-gl";
+import { useMap } from "react-map-gl/maplibre";
+import { Marker } from "maplibre-gl";
+import { altitudeScreenOffset } from "@/lib/map3d";
 
 interface Marker3DProps {
   longitude: number;
   latitude: number;
-  /** Altitude in meters above ground level (AGL). Uses marker.setAltitude(). */
+  /** Altitude in meters above ground level (AGL), shown by shifting the marker on screen. */
   altitude?: number;
   anchor?: "center" | "top" | "bottom" | "left" | "right";
   draggable?: boolean;
@@ -18,9 +19,8 @@ interface Marker3DProps {
 
 /**
  * A Marker component that supports 3D altitude positioning above ground.
- * Uses the native mapbox-gl Marker.setAltitude() API which positions the
- * marker at the given meters above the map plane (terrain surface when
- * terrain is enabled).
+ * MapLibre markers sit on the terrain surface; the altitude is added as a
+ * screen offset computed from the camera, updated on every camera move.
  */
 export function Marker3D({
   longitude,
@@ -34,10 +34,12 @@ export function Marker3D({
   children,
 }: Marker3DProps) {
   const { current: mapRef } = useMap();
-  const markerRef = useRef<mapboxgl.Marker | null>(null);
+  const markerRef = useRef<Marker | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const callbacksRef = useRef({ onDragStart, onDrag, onDragEnd });
   callbacksRef.current = { onDragStart, onDrag, onDragEnd };
+  const altitudeRef = useRef(altitude);
+  altitudeRef.current = altitude;
 
   // Create the marker container element once
   if (!containerRef.current) {
@@ -50,16 +52,25 @@ export function Marker3D({
     const map = mapRef.getMap();
 
     const el = containerRef.current!;
-    const marker = new mapboxgl.Marker({
+    const marker = new Marker({
       element: el,
       anchor,
       draggable,
     });
 
     marker.setLngLat([longitude, latitude]);
-    (marker as any).setAltitude(altitude);
     marker.addTo(map);
     markerRef.current = marker;
+
+    const applyAltitude = () => {
+      const { lng, lat } = marker.getLngLat();
+      marker.setOffset(
+        altitudeScreenOffset(map, lng, lat, altitudeRef.current),
+      );
+    };
+    applyAltitude();
+    map.on("move", applyAltitude);
+    map.on("idle", applyAltitude);
 
     // Attach drag event handlers
     if (draggable) {
@@ -81,6 +92,8 @@ export function Marker3D({
     }
 
     return () => {
+      map.off("move", applyAltitude);
+      map.off("idle", applyAltitude);
       marker.remove();
       markerRef.current = null;
     };
@@ -91,9 +104,13 @@ export function Marker3D({
   useEffect(() => {
     if (markerRef.current) {
       markerRef.current.setLngLat([longitude, latitude]);
-      (markerRef.current as any).setAltitude(altitude);
+      if (mapRef) {
+        markerRef.current.setOffset(
+          altitudeScreenOffset(mapRef.getMap(), longitude, latitude, altitude),
+        );
+      }
     }
-  }, [longitude, latitude, altitude]);
+  }, [mapRef, longitude, latitude, altitude]);
 
   return containerRef.current
     ? createPortal(children, containerRef.current)

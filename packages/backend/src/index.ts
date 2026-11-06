@@ -12,7 +12,11 @@ import { airspaceRoutes } from "./routes/airspace.js";
 import { adminRoutes } from "./routes/admin.js";
 import { preferencesRoutes } from "./routes/preferences.js";
 import { globalLimiter } from "./middleware/rateLimit.js";
-import { resolveDefaultMapView } from "./lib/config.js";
+import {
+  resolveDefaultMapView,
+  resolveMapSources,
+  resolveTrustedNetworks,
+} from "./lib/config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -22,7 +26,7 @@ const PORT = process.env.PORT || 3001;
 // Trust reverse proxy (e.g. nginx, Docker) so rate limiting uses real client IP
 app.set("trust proxy", 1);
 
-// Security headers. CSP and COEP are disabled because the SPA embeds Mapbox GL
+// Security headers. CSP and COEP are disabled because the SPA embeds MapLibre GL
 // (web workers loaded from blob: URLs) and, in cloud mode, Google OAuth — a strict
 // CSP/COEP breaks both. All other baseline headers (nosniff, frameguard, HSTS,
 // referrer-policy, …) are applied. Tightening CSP is tracked as a follow-up.
@@ -77,7 +81,8 @@ app.get("/api/config", (_req, res) => {
   res.json({
     selfHosted,
     googleClientId: selfHosted ? undefined : process.env.GOOGLE_CLIENT_ID,
-    mapboxToken: process.env.MAPBOX_TOKEN || "",
+    mapSources: resolveMapSources(),
+    trustedLogin: selfHosted && resolveTrustedNetworks() !== null,
     defaultMapView: resolveDefaultMapView(),
   });
 });

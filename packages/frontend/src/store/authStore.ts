@@ -13,6 +13,8 @@ interface AuthState {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   googleLogin: (credential: string) => Promise<void>;
+  /** Silent sign-in from a trusted network; false when not allowed. */
+  trustedLogin: () => Promise<boolean>;
   logout: () => void;
   restore: () => void;
   setNeedsVerification: (value: boolean) => void;
@@ -78,6 +80,31 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
+  trustedLogin: async () => {
+    try {
+      const res = await api.post<{
+        token: string;
+        userId: string;
+        email: string;
+        isAdmin: boolean;
+      }>("/auth/trusted", {});
+      localStorage.setItem("droneroute_token", res.token);
+      localStorage.setItem("droneroute_email", res.email);
+      localStorage.setItem("droneroute_is_admin", String(res.isAdmin));
+      localStorage.setItem("droneroute_trusted", "true");
+      set({
+        token: res.token,
+        email: res.email,
+        userId: res.userId,
+        isAdmin: res.isAdmin,
+        needsVerification: false,
+      });
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   googleLogin: async (credential: string) => {
     set({ isLoading: true });
     try {
@@ -108,6 +135,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     localStorage.removeItem("droneroute_token");
     localStorage.removeItem("droneroute_email");
     localStorage.removeItem("droneroute_is_admin");
+    localStorage.removeItem("droneroute_trusted");
     set({
       token: null,
       email: null,

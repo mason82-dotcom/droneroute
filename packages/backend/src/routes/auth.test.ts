@@ -1,8 +1,9 @@
 import express from "express";
 import request from "supertest";
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { initDb, getDb } from "../models/db.js";
 import { authRoutes } from "./auth.js";
+import { authLimiter } from "../middleware/rateLimit.js";
 
 const app = express();
 app.use(express.json());
@@ -96,5 +97,44 @@ describe("POST /api/auth/login — failure paths", () => {
       .send({ email: "login@test.dev", password: "secret123" });
     expect(res.status).toBe(200);
     expect(res.body.token).toBeTruthy();
+  });
+});
+
+describe("POST /api/auth/trusted", () => {
+  // Earlier tests use up the failed-attempt budget of the shared limiter.
+  beforeEach(async () => {
+    for (const key of ["::ffff:127.0.0.1", "127.0.0.1", "::1"]) {
+      await authLimiter.resetKey(key);
+    }
+  });
+
+  it("is not available without TRUSTED_NETWORKS", async () => {
+    delete process.env.TRUSTED_NETWORKS;
+    const res = await request(app).post("/api/auth/trusted").send({});
+    expect(res.status).toBe(404);
+  });
+
+  it("refuses clients outside the trusted networks", async () => {
+    process.env.TRUSTED_NETWORKS = "192.168.178.0/24";
+    const res = await request(app).post("/api/auth/trusted").send({});
+    expect(res.status).toBe(403);
+    delete process.env.TRUSTED_NETWORKS;
+  });
+
+  it("signs trusted clients into one shared local account without a password", async () => {
+    process.env.TRUSTED_NETWORKS = "127.0.0.0/8, ::1/128";
+    const first = await request(app).post("/api/auth/trusted").send({});
+    const second = await request(app).post("/api/auth/trusted").send({});
+    delete process.env.TRUSTED_NETWORKS;
+    expect(first.status).toBe(200);
+    expect(first.body.token).toBeTruthy();
+    expect(first.body.isAdmin).toBe(false);
+    expect(second.body.userId).toBe(first.body.userId);
+
+    // The local account has no usable password
+    const login = await request(app)
+      .post("/api/auth/login")
+      .send({ email: first.body.email, password: "" });
+    expect(login.status).not.toBe(200);
   });
 });

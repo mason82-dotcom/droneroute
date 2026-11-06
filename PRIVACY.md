@@ -55,10 +55,12 @@ kinds of data:
 DroneRoute uses a few external services to function. It does **not** use any
 analytics, advertising, or behavioural tracking.
 
-- **Mapbox** — map tiles and the location search box are served by Mapbox.
-  Your current map view and any search terms you type are sent to Mapbox so it
-  can return tiles and results. See Mapbox's privacy policy for how they handle
-  these requests.
+- **Map data providers** — map tiles, imagery, and terrain are loaded from
+  OpenFreeMap, Esri World Imagery, and Mapterhorn by default (or the providers
+  a self-hosted instance configures), and the location search box sends your
+  search terms and the current map center to Photon (komoot). These requests
+  reveal the map area you are viewing and your IP address to those providers;
+  no account or API key is involved.
 - **Airspace providers** — when you enable airspace restrictions, the bounding
   box of your current map view is sent to the relevant national provider
   (e.g. ENAIRE in Spain, DGAC in France, NATS in the UK) to fetch the zones.
