@@ -28,8 +28,8 @@ export class ErrorBoundary extends Component<
       <div className="flex h-screen w-screen flex-col items-center justify-center gap-4 bg-background p-6 text-center text-foreground">
         <h1 className="text-lg font-semibold">Something went wrong</h1>
         <p className="max-w-md text-sm text-muted-foreground">
-          {this.state.error.message ||
-            "An unexpected error stopped the app from rendering."}
+          An unexpected error stopped the app. Reload to continue; details are
+          in the browser console.
         </p>
         <button
           className="rounded bg-primary px-3 py-1.5 text-sm text-primary-foreground"

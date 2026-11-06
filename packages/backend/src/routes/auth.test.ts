@@ -138,3 +138,38 @@ describe("POST /api/auth/trusted", () => {
     expect(login.status).not.toBe(200);
   });
 });
+
+describe("401 responses distinguish an invalid session from a wrong password", () => {
+  beforeEach(async () => {
+    for (const key of ["::ffff:127.0.0.1", "127.0.0.1", "::1"]) {
+      await authLimiter.resetKey(key);
+    }
+  });
+
+  it("marks a missing or invalid token with code SESSION_INVALID", async () => {
+    const missing = await request(app)
+      .post("/api/auth/change-password")
+      .send({ currentPassword: "x", newPassword: "secret456" });
+    expect(missing.status).toBe(401);
+    expect(missing.body.code).toBe("SESSION_INVALID");
+
+    const invalid = await request(app)
+      .post("/api/auth/change-password")
+      .set("Authorization", "Bearer not.a.jwt")
+      .send({ currentPassword: "x", newPassword: "secret456" });
+    expect(invalid.status).toBe(401);
+    expect(invalid.body.code).toBe("SESSION_INVALID");
+  });
+
+  it("does not mark a wrong current password as an invalid session", async () => {
+    const reg = await request(app)
+      .post("/api/auth/register")
+      .send({ email: "pw-check@test.dev", password: "secret123" });
+    const res = await request(app)
+      .post("/api/auth/change-password")
+      .set("Authorization", `Bearer ${reg.body.token}`)
+      .send({ currentPassword: "wrong-password", newPassword: "secret456" });
+    expect(res.status).not.toBe(200);
+    expect(res.body.code).not.toBe("SESSION_INVALID");
+  });
+});
