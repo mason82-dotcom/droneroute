@@ -26,3 +26,30 @@ describe("writeMissionFolder", () => {
     expect(fs.readFileSync(result.remotePath, "utf-8")).toBe("PK-test");
   });
 });
+
+describe("writeMissionFolder with a placeholder id", () => {
+  it("reuses the given UUID", () => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "droneroute-cli-"));
+    const kmz = path.join(tmp, "mission.kmz");
+    fs.writeFileSync(kmz, "PK");
+    const uuid = "11111111-2222-3333-4444-555555555555";
+    const result = writeMissionFolder(path.join(tmp, "out"), kmz, uuid);
+    expect(result.uuid).toBe(uuid);
+    expect(result.remotePath).toBe(path.join(tmp, "out", uuid, `${uuid}.KMZ`));
+  });
+});
+
+describe("writeMissionFolder failure handling", () => {
+  it("keeps an existing folder when the write fails", () => {
+    tmp = fs.mkdtempSync(path.join(os.tmpdir(), "droneroute-cli-"));
+    const uuid = "11111111-2222-3333-4444-555555555555";
+    const existing = path.join(tmp, uuid);
+    fs.mkdirSync(existing);
+    // A directory where the KMZ should go makes the write fail.
+    fs.mkdirSync(path.join(existing, `${uuid}.KMZ`));
+    const kmz = path.join(tmp, "mission.kmz");
+    fs.writeFileSync(kmz, "PK");
+    expect(() => writeMissionFolder(tmp, kmz, uuid.toLowerCase())).toThrow();
+    expect(fs.existsSync(existing)).toBe(true);
+  });
+});

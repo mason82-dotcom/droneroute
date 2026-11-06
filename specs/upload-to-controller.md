@@ -10,6 +10,8 @@ Send a mission file directly to a DJI controller connected to your computer.
 - Upload to a controller without USB debugging (DJI RC 2, RC-N3) over MTP file transfer.
 - Point the tool at a mounted controller folder with `--dir <path>`.
 - Export a ready mission folder with `--out <folder>` and copy it by hand.
+- Replace a placeholder route with `--replace [uuid]` when DJI Fly does not list new routes: pick the
+  placeholder from a list (newest first) or name its id. The original file is backed up first.
 
 ## How it works
 
@@ -26,5 +28,7 @@ Send a mission file directly to a DJI controller connected to your computer.
 - On Linux, controllers opened in the file manager (MTP via GVFS) are found automatically.
 - On macOS and Windows, MTP controllers are not mounted as drives: use `--out` and copy the
   created folder to `Android/data/dji.go.v5/files/waypoint/` with File Explorer or OpenMTP.
+- If DJI Fly does not show an uploaded route, save a short placeholder route in DJI Fly and run the tool
+  again with `--replace`. The placeholder's original KMZ is kept in `~/.droneroute/backups/`.
 - DJI Fly keeps routes in internal storage. Create one route in DJI Fly first so the waypoint
   folder exists.
