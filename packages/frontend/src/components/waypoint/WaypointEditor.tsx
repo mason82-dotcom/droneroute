@@ -24,6 +24,7 @@ import {
   speedRange,
 } from "@/lib/units";
 import type { HeadingMode, TurnMode } from "@droneroute/shared";
+import { effectiveTurnMode, isCurvatureTurnMode } from "@droneroute/shared";
 
 /**
  * Calculate the bearing (heading) from one lat/lng point to another.
@@ -60,6 +61,10 @@ export function WaypointEditorInline({
   const unitSystem = usePreferencesStore((s) => s.preferences.unitSystem);
 
   const wp = waypoints.find((w) => w.index === waypointIndex);
+  // The last waypoint has no segment after it
+  const isLastWaypoint =
+    waypoints.length > 0 &&
+    waypoints[waypoints.length - 1].index === waypointIndex;
   if (!wp) return null;
 
   const update = (updates: Record<string, any>) => {
@@ -277,14 +282,23 @@ export function WaypointEditorInline({
           value={
             wp.useGlobalTurnParam
               ? "global"
-              : wp.turnMode || config.globalTurnMode
+              : effectiveTurnMode(wp, config.globalTurnMode)
           }
           onValueChange={(v) => {
-            if (v === "global") {
-              update({ useGlobalTurnParam: true });
-            } else {
-              update({ useGlobalTurnParam: false, turnMode: v as TurnMode });
-            }
+            const next =
+              v === "global"
+                ? { useGlobalTurnParam: true }
+                : { useGlobalTurnParam: false, turnMode: v as TurnMode };
+            const mode = effectiveTurnMode(
+              { ...wp, ...next },
+              config.globalTurnMode,
+            );
+            // Leaving the curve modes: the straight/curved choice no longer applies
+            update(
+              isCurvatureTurnMode(mode)
+                ? next
+                : { ...next, useStraightLine: undefined },
+            );
           }}
         >
           <SelectTrigger className="h-8 text-xs">
@@ -305,6 +319,27 @@ export function WaypointEditorInline({
           </SelectContent>
         </Select>
       </div>
+
+      {isCurvatureTurnMode(effectiveTurnMode(wp, config.globalTurnMode)) &&
+        !isLastWaypoint && (
+          <div>
+            <Label className="text-xs">Segment to next WP</Label>
+            <Select
+              value={wp.useStraightLine === false ? "curved" : "straight"}
+              onValueChange={(v) =>
+                update({ useStraightLine: v === "straight" })
+              }
+            >
+              <SelectTrigger className="h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="straight">Straight line</SelectItem>
+                <SelectItem value="curved">Curved</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        )}
 
       <Separator />
 

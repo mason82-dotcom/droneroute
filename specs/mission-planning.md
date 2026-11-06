@@ -8,6 +8,7 @@ Plan a drone flight by placing waypoints on the map and configuring what the dro
 - Set altitude, speed, gimbal pitch (camera angle), and heading for each waypoint.
 - Choose a heading mode: follow the flight path, set a fixed angle, smooth transition between angles, or aim toward a point of interest.
 - Choose a turn mode: smooth curve, stop at the waypoint then continue, or fly through without stopping.
+- For the curve turn modes, choose whether the segment to the next waypoint is a **straight line** (default) or **curved**. Exported KMZ files always state this (`useStraightLine`), so DJI Fly and DJI Pilot 2 draw and fly straight segments as straight lines. Orbits use curved segments.
 - Reorder waypoints by dragging them in the sidebar list.
 - Select multiple waypoints at once (Ctrl+click, Shift+click, or Ctrl+A) and edit them all in bulk.
 - Rename waypoints by double-clicking their name.

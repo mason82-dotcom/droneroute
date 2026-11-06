@@ -1,3 +1,5 @@
+import { effectiveTurnMode, isCurvatureTurnMode } from "@droneroute/shared";
+import type { TurnMode } from "@droneroute/shared";
 import JSZip from "jszip";
 import { XMLParser } from "fast-xml-parser";
 import type {
@@ -46,6 +48,20 @@ function parseActions(placemark: any): WaypointAction[] {
     }
   }
   return actions;
+}
+
+/**
+ * useStraightLine of an imported waypoint (placemark value, else the folder's
+ * globalUseStraightLine). Missing for a curvature turn mode means curved, as
+ * DJI flies it; for other modes it does not apply.
+ */
+function readStraightLine(
+  raw: unknown,
+  turnMode: TurnMode,
+): boolean | undefined {
+  if (raw === "1" || raw === 1) return true;
+  if (raw === "0" || raw === 0) return false;
+  return isCurvatureTurnMode(turnMode) ? false : undefined;
 }
 
 export async function parseKmz(buffer: Buffer): Promise<{
@@ -223,6 +239,18 @@ export async function parseKmz(buffer: Buffer): Promise<{
       headingAngle,
       turnMode: turnMode as any,
       turnDampingDist,
+      useStraightLine: readStraightLine(
+        pm["wpml:useStraightLine"] ?? folder?.["wpml:globalUseStraightLine"],
+        effectiveTurnMode(
+          {
+            useGlobalTurnParam:
+              pm["wpml:useGlobalTurnParam"] === "1" ||
+              pm["wpml:useGlobalTurnParam"] === 1,
+            turnMode: turnMode as TurnMode | undefined,
+          },
+          config.globalTurnMode,
+        ),
+      ),
       poiId,
       actions,
     };

@@ -206,6 +206,8 @@ export function generateOrbit(params: OrbitParams): TemplateResult {
       gimbalPitchAngle: gimbalPitch,
       turnMode: "toPointAndPassWithContinuityCurvature",
       useGlobalTurnParam: false,
+      // An orbit is meant to be flown as a smooth circle between its points.
+      useStraightLine: false,
       actions: [],
     });
   }
@@ -501,6 +503,8 @@ export function generatePencil(params: PencilParams): TemplateResult {
       gimbalPitchAngle,
       turnMode: "toPointAndPassWithContinuityCurvature" as const,
       useGlobalTurnParam: false,
+      // A freehand path is meant to be flown smoothly, not as a polygon.
+      useStraightLine: false,
       actions: [],
     }),
   );

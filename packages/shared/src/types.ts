@@ -13,6 +13,27 @@ export type TurnMode =
   | "toPointAndStopWithContinuityCurvature"
   | "toPointAndPassWithContinuityCurvature";
 
+/**
+ * Turn modes for which DJI requires wpml:useStraightLine (straight vs. curved
+ * segment to the next waypoint); without it DJI treats the segment as curved.
+ */
+export const CURVATURE_TURN_MODES: readonly TurnMode[] = [
+  "toPointAndStopWithContinuityCurvature",
+  "toPointAndPassWithContinuityCurvature",
+];
+
+export function isCurvatureTurnMode(mode: TurnMode | undefined): boolean {
+  return mode !== undefined && CURVATURE_TURN_MODES.includes(mode);
+}
+
+/** Turn mode that actually applies to a waypoint (its own or the global one). */
+export function effectiveTurnMode(
+  wp: { useGlobalTurnParam: boolean; turnMode?: TurnMode },
+  globalTurnMode: TurnMode,
+): TurnMode {
+  return wp.useGlobalTurnParam ? globalTurnMode : wp.turnMode || globalTurnMode;
+}
+
 export type HeightMode = "EGM96" | "relativeToStartPoint" | "aboveGroundLevel";
 
 export type FlyToWaylineMode = "safely" | "pointToPoint";
@@ -240,6 +261,13 @@ export interface Waypoint {
   poiId?: string; // Reference to PointOfInterest when headingMode = "towardPOI"
   turnMode?: TurnMode;
   turnDampingDist?: number;
+  /**
+   * Segment to the next waypoint as close to a straight line as possible
+   * (WPML `useStraightLine`). Defaults to straight; set to false for a curved
+   * segment. DJI requires it for the *ContinuityCurvature turn modes and
+   * draws/flies those segments curved when it is missing.
+   */
+  useStraightLine?: boolean;
   gimbalPitchAngle: number;
   actions: WaypointAction[];
 }

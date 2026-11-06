@@ -82,6 +82,7 @@ Click a waypoint in the sidebar list (or on the map) to select it and open its i
   - _Coordinated Turn_ — smooth curved path (doesn't stop)
   - _To Point and Stop_ — fly to the exact point, pause, then continue
   - _To Point and Pass_ — fly through with continuity curvature (smooth, no stop)
+- **Segment to next WP** — for the two curve turn modes (_Stop at point (curve)_ and _Pass point (curve)_): fly the segment to the next waypoint as a **straight line** (default) or **curved**. The choice is written to the KMZ (`useStraightLine`), so DJI Fly and DJI Pilot 2 draw and fly straight segments as straight lines. Orbit and pencil paths use curved segments.
 - **Gimbal pitch** — camera tilt angle (-90 = straight down, 0 = horizon, up to 45)
 
 ### Reordering Waypoints
@@ -248,7 +249,7 @@ Draw a freehand flight path directly on the map. Click and drag to sketch the pa
 
 **Use cases:** Custom flight paths that don't fit a template, following roads or rivers, tracing building perimeters, artistic cinematic routes.
 
-The waypoints are placed at equal arc-length intervals along the drawn path using equidistant resampling. The heading is set to "Follow Wayline" so the drone naturally faces the direction of travel, and the turn mode uses smooth continuity curvature to keep the flight fluid. After generating, a faded outline of the original drawn path is shown behind the waypoint preview so you can judge approximation quality.
+The waypoints are placed at equal arc-length intervals along the drawn path using equidistant resampling. The heading is set to "Follow Wayline" so the drone naturally faces the direction of travel, and the turn mode uses smooth continuity curvature with curved segments to keep the flight fluid. After generating, a faded outline of the original drawn path is shown behind the waypoint preview so you can judge approximation quality.
 
 ![Pencil path template with freehand drawn S-curve and 10 equidistant waypoints](docs/screenshots/template-pencil.jpg)
 
