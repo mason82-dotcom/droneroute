@@ -9,6 +9,7 @@ import {
 } from "../services/authService.js";
 import { authMiddleware, type AuthRequest } from "../middleware/auth.js";
 import { authLimiter } from "../middleware/rateLimit.js";
+import { isTrustedAddress, resolveTrustedNetworks } from "../lib/config.js";
 
 export const authRoutes = Router();
 
@@ -120,6 +121,55 @@ authRoutes.post("/google", authLimiter, async (req, res) => {
 
   const token = generateToken(id, isAdmin);
   res.status(201).json({ token, userId: id, email, isAdmin });
+});
+
+// ---------------------------------------------------------------------------
+// Trusted-network sign-in (self-hosted mode only)
+// ---------------------------------------------------------------------------
+// Clients from TRUSTED_NETWORKS (e.g. the home LAN or a tailnet) share one local
+// account and are signed in without a password. The client address comes from
+// req.ip, so "trust proxy" must match the deployment (one proxy hop by default).
+authRoutes.post("/trusted", authLimiter, (req, res) => {
+  const networks = isSelfHosted() ? resolveTrustedNetworks() : null;
+  if (!networks) {
+    res.status(404).json({ error: "Trusted-network sign-in is not enabled" });
+    return;
+  }
+  if (!isTrustedAddress(networks, req.ip)) {
+    res.status(403).json({ error: "Not in a trusted network" });
+    return;
+  }
+
+  const email = (
+    process.env.TRUSTED_USER_EMAIL || "local@droneroute.local"
+  ).trim();
+  const db = getDb();
+  let user = db
+    .prepare(
+      "SELECT id, email, is_admin, is_banned FROM users WHERE LOWER(email) = LOWER(?)",
+    )
+    .get(email) as any;
+  if (!user) {
+    const id = uuidv4();
+    // Empty password hash: this account cannot sign in with a password.
+    db.prepare(
+      "INSERT INTO users (id, email, password_hash, email_verified, is_admin) VALUES (?, ?, '', 1, 0)",
+    ).run(id, email);
+    user = { id, email, is_admin: 0, is_banned: 0 };
+  }
+  if (user.is_banned) {
+    res.status(403).json({ error: "Your account has been suspended" });
+    return;
+  }
+  db.prepare(
+    "UPDATE users SET last_login_at = datetime('now') WHERE id = ?",
+  ).run(user.id);
+  res.json({
+    token: generateToken(user.id, !!user.is_admin),
+    userId: user.id,
+    email: user.email,
+    isAdmin: !!user.is_admin,
+  });
 });
 
 // ---------------------------------------------------------------------------

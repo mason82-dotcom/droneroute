@@ -12,7 +12,11 @@ import { airspaceRoutes } from "./routes/airspace.js";
 import { adminRoutes } from "./routes/admin.js";
 import { preferencesRoutes } from "./routes/preferences.js";
 import { globalLimiter } from "./middleware/rateLimit.js";
-import { resolveDefaultMapView, resolveMapSources } from "./lib/config.js";
+import {
+  resolveDefaultMapView,
+  resolveMapSources,
+  resolveTrustedNetworks,
+} from "./lib/config.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -78,6 +82,7 @@ app.get("/api/config", (_req, res) => {
     selfHosted,
     googleClientId: selfHosted ? undefined : process.env.GOOGLE_CLIENT_ID,
     mapSources: resolveMapSources(),
+    trustedLogin: selfHosted && resolveTrustedNetworks() !== null,
     defaultMapView: resolveDefaultMapView(),
   });
 });

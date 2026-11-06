@@ -1,3 +1,4 @@
+import { BlockList, isIP } from "node:net";
 import {
   DEFAULT_MAP_SOURCES,
   DEFAULT_MAP_VIEW,
@@ -156,4 +157,52 @@ export function resolveMapSources(
       : d.terrain,
     geocoderUrl,
   };
+}
+
+/**
+ * Networks whose clients are signed in automatically (self-hosted only), parsed from
+ * TRUSTED_NETWORKS: CIDRs or single addresses separated by commas or spaces, e.g.
+ * "192.168.178.0/24, 100.64.0.0/10". Invalid entries are ignored; null when nothing is set.
+ */
+export function resolveTrustedNetworks(
+  env: NodeJS.ProcessEnv = process.env,
+): BlockList | null {
+  const raw = env.TRUSTED_NETWORKS?.trim();
+  if (!raw) return null;
+  const list = new BlockList();
+  let count = 0;
+  for (const entry of raw.split(/[\s,]+/).filter(Boolean)) {
+    const [address, prefixText] = entry.split("/");
+    const family = isIP(address);
+    if (!family) continue;
+    const type = family === 4 ? "ipv4" : "ipv6";
+    if (prefixText === undefined) {
+      list.addAddress(address, type);
+      count++;
+      continue;
+    }
+    const prefix = Number(prefixText);
+    if (
+      !Number.isInteger(prefix) ||
+      prefix < 0 ||
+      prefix > (family === 4 ? 32 : 128)
+    ) {
+      continue;
+    }
+    list.addSubnet(address, prefix, type);
+    count++;
+  }
+  return count > 0 ? list : null;
+}
+
+/** True when the client address (IPv4, IPv6 or IPv4-mapped IPv6) is in one of the networks. */
+export function isTrustedAddress(
+  networks: BlockList | null,
+  address: string | undefined,
+): boolean {
+  if (!networks || !address) return false;
+  const plain = address.startsWith("::ffff:") ? address.slice(7) : address;
+  const family = isIP(plain);
+  if (!family) return false;
+  return networks.check(plain, family === 4 ? "ipv4" : "ipv6");
 }

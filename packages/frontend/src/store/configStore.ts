@@ -11,6 +11,8 @@ interface ConfigState {
   selfHosted: boolean;
   googleClientId: string | null;
   mapSources: MapSourcesConfig;
+  /** Clients from trusted networks are signed in without a password. */
+  trustedLogin: boolean;
   defaultMapView: MapViewState;
   loaded: boolean;
   fetchConfig: () => Promise<void>;
@@ -20,6 +22,7 @@ export const useConfigStore = create<ConfigState>((set) => ({
   selfHosted: true,
   googleClientId: null,
   mapSources: DEFAULT_MAP_SOURCES,
+  trustedLogin: false,
   defaultMapView: DEFAULT_MAP_VIEW,
   loaded: false,
 
@@ -29,12 +32,14 @@ export const useConfigStore = create<ConfigState>((set) => ({
         selfHosted: boolean;
         googleClientId?: string;
         mapSources?: MapSourcesConfig;
+        trustedLogin?: boolean;
         defaultMapView?: MapViewState;
       }>("/config");
       set({
         selfHosted: res.selfHosted,
         googleClientId: res.googleClientId ?? null,
         mapSources: res.mapSources ?? DEFAULT_MAP_SOURCES,
+        trustedLogin: res.trustedLogin ?? false,
         defaultMapView: res.defaultMapView ?? DEFAULT_MAP_VIEW,
         loaded: true,
       });

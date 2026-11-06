@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import { DEFAULT_MAP_SOURCES, DEFAULT_MAP_VIEW } from "@droneroute/shared";
-import { resolveDefaultMapView, resolveMapSources } from "./config.js";
+import {
+  isTrustedAddress,
+  resolveDefaultMapView,
+  resolveMapSources,
+  resolveTrustedNetworks,
+} from "./config.js";
 
 describe("resolveDefaultMapView", () => {
   it("returns the built-in default when DEFAULT_MAP_VIEW is unset", () => {
@@ -130,5 +135,27 @@ describe("resolveMapSources", () => {
     expect(resolveMapSources({ MAP_GEOCODER_URL: "off" }).geocoderUrl).toBe(
       null,
     );
+  });
+});
+
+describe("resolveTrustedNetworks / isTrustedAddress", () => {
+  it("is off when TRUSTED_NETWORKS is unset or has no valid entry", () => {
+    expect(resolveTrustedNetworks({})).toBeNull();
+    expect(
+      resolveTrustedNetworks({ TRUSTED_NETWORKS: "nonsense, 10.0.0.0/99" }),
+    ).toBeNull();
+  });
+
+  it("matches IPv4, IPv6 and IPv4-mapped addresses", () => {
+    const nets = resolveTrustedNetworks({
+      TRUSTED_NETWORKS: "192.168.178.0/24, 100.64.0.0/10 fd1a:baaf:283e::/64",
+    });
+    expect(isTrustedAddress(nets, "192.168.178.42")).toBe(true);
+    expect(isTrustedAddress(nets, "::ffff:192.168.178.42")).toBe(true);
+    expect(isTrustedAddress(nets, "100.98.97.84")).toBe(true);
+    expect(isTrustedAddress(nets, "fd1a:baaf:283e::1234")).toBe(true);
+    expect(isTrustedAddress(nets, "192.168.179.1")).toBe(false);
+    expect(isTrustedAddress(nets, "8.8.8.8")).toBe(false);
+    expect(isTrustedAddress(nets, undefined)).toBe(false);
   });
 });
