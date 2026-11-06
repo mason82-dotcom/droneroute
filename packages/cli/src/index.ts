@@ -2,7 +2,7 @@
 
 import fs from "node:fs";
 import path from "node:path";
-import { program } from "commander";
+import { Option, program } from "commander";
 import chalk from "chalk";
 import { detectDevices, selectDevice } from "./device.js";
 import { uploadKmz, writeMissionFolder } from "./upload.js";
@@ -26,9 +26,11 @@ program
   )
   .version(pkg.version)
   .argument("<file>", "path to a .kmz mission file")
-  .option(
-    "-d, --dir <path>",
-    "controller storage mounted at <path> (e.g. via jmtpfs or an MTP file manager)",
+  .addOption(
+    new Option(
+      "-d, --dir <path>",
+      "controller storage mounted at <path> (e.g. via jmtpfs or an MTP file manager)",
+    ).conflicts("out"),
   )
   .option(
     "-o, --out <folder>",
@@ -46,11 +48,6 @@ program
     if (!file.toLowerCase().endsWith(".kmz")) {
       const ext = path.extname(file) || "(none)";
       console.error(chalk.red(`Error: expected a .kmz file, got "${ext}"`));
-      process.exit(1);
-    }
-
-    if (opts.dir && opts.out) {
-      console.error(chalk.red("Error: use either --dir or --out, not both"));
       process.exit(1);
     }
 
@@ -87,7 +84,9 @@ program
     // ── Detect controllers ──────────────────────────────────────────
     let devices;
     if (opts.dir) {
-      const waypointPath = findWaypointDir(path.resolve(opts.dir));
+      const waypointPath = findWaypointDir(path.resolve(opts.dir), {
+        descend: true,
+      });
       if (!waypointPath) {
         console.error(
           chalk.red(`\nNo DJI Fly waypoint folder found under "${opts.dir}".`),
@@ -155,6 +154,12 @@ program
           chalk.dim("  • Check that the USB cable supports data transfer"),
         );
       }
+
+      console.error(
+        chalk.dim(
+          "  • Or insert the controller's SD card directly (if DJI Fly stores routes there)",
+        ),
+      );
       process.exit(1);
     }
 

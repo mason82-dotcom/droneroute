@@ -55,7 +55,16 @@ export function detectDevices(): DjiDevice[] {
     }
   }
 
-  return devices;
+  // A controller with USB debugging that is also open in the file manager
+  // shows up twice; GVFS names MTP devices after their serial, so keep adb.
+  const adbSerials = devices
+    .filter((d) => d.type === "adb")
+    .map((d) => d.serial!.toUpperCase());
+  return devices.filter(
+    (d) =>
+      d.type === "adb" ||
+      !adbSerials.some((serial) => d.label.toUpperCase().includes(serial)),
+  );
 }
 
 /**

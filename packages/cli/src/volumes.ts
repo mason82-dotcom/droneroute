@@ -16,24 +16,37 @@ export interface MountedDevice {
 /**
  * Locate the DJI Fly waypoint directory for a user-supplied or detected path.
  *
- * Accepts the waypoint directory itself, the storage root that contains
- * `Android/data/dji.go.v5/files/waypoint`, or a device folder one level above
- * the storage roots (MTP devices expose e.g. "Internal shared storage").
- * Returns `null` when no waypoint directory is found.
+ * Accepts the waypoint directory itself or the storage root that contains
+ * `Android/data/dji.go.v5/files/waypoint`. With `descend`, it also looks one
+ * level down, for device folders above the storage roots (MTP devices expose
+ * e.g. "Internal shared storage"). Returns `null` when nothing is found.
  */
-export function findWaypointDir(dir: string): string | null {
-  const candidates = [
-    path.join(dir, WAYPOINT_PATH),
-    ...listSubdirs(dir).map((sub) => path.join(sub, WAYPOINT_PATH)),
-  ];
-  if (toPosix(dir).replace(/\/+$/, "").endsWith(WAYPOINT_PATH)) {
-    candidates.unshift(dir);
+export function findWaypointDir(
+  dir: string,
+  { descend = false }: { descend?: boolean } = {},
+): string | null {
+  if (isWaypointPath(dir) && isDirectory(dir)) return dir;
+
+  const direct = path.join(dir, WAYPOINT_PATH);
+  if (isDirectory(direct)) return direct;
+  if (!descend) return null;
+
+  for (const sub of listSubdirs(dir)) {
+    const nested = path.join(sub, WAYPOINT_PATH);
+    if (isDirectory(nested)) return nested;
   }
-  return candidates.find(isDirectory) ?? null;
+  return null;
 }
 
-function toPosix(p: string): string {
-  return p.split(path.sep).join("/");
+/** Whether `p` ends with the DJI Fly waypoint path (whole segments, any case). */
+function isWaypointPath(p: string): boolean {
+  const segments = p.split(/[\\/]+/).filter(Boolean);
+  const expected = WAYPOINT_PATH.split("/");
+  const tail = segments.slice(-expected.length);
+  return (
+    tail.length === expected.length &&
+    tail.every((seg, i) => seg.toLowerCase() === expected[i].toLowerCase())
+  );
 }
 
 /**
@@ -46,7 +59,9 @@ export function findMountedDevices(
   const devices: MountedDevice[] = [];
 
   for (const root of roots) {
-    const waypointPath = findWaypointDir(root.path);
+    const waypointPath = findWaypointDir(root.path, {
+      descend: root.kind === "mtp",
+    });
     if (!waypointPath) continue;
 
     const name = path.basename(root.path);
@@ -65,8 +80,13 @@ export function findMountedDevices(
 
 /** Readable name from a GVFS MTP folder such as "mtp:host=DJI_RC_2_1234". */
 function mtpName(folder: string): string {
-  const host = folder.replace(/^mtp:host=/, "");
-  return decodeURIComponent(host).replace(/_/g, " ");
+  let host = folder.replace(/^mtp:host=/, "");
+  try {
+    host = decodeURIComponent(host);
+  } catch {
+    // Keep the raw name if it is not valid percent-encoding.
+  }
+  return host.replace(/_/g, " ");
 }
 
 /**
@@ -86,7 +106,8 @@ function getMountRoots(): { path: string; kind: "volume" | "mtp" }[] {
     const uid = os.userInfo().uid;
     return [
       ...volumes([
-        ...listSubdirs("/media"),
+        // /media/<user> is a parent of mounts, not a mount itself.
+        ...listSubdirs("/media").filter((p) => path.basename(p) !== user),
         ...listSubdirs(`/media/${user}`),
         ...listSubdirs("/mnt"),
         ...listSubdirs(`/run/media/${user}`),

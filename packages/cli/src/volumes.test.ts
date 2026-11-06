@@ -35,7 +35,7 @@ describe("findWaypointDir", () => {
 
   it("looks one level down for MTP storage roots", () => {
     const expected = makeWaypointDir(path.join(tmp, "Internal shared storage"));
-    expect(findWaypointDir(tmp)).toBe(expected);
+    expect(findWaypointDir(tmp, { descend: true })).toBe(expected);
   });
 
   it("returns null when DJI Fly has not created the folder yet", () => {
@@ -68,5 +68,34 @@ describe("findMountedDevices", () => {
         mountPoint: mtp,
       },
     ]);
+  });
+});
+
+describe("findWaypointDir edge cases", () => {
+  it("only descends into subfolders when asked", () => {
+    makeWaypointDir(path.join(tmp, "SDCARD"));
+    expect(findWaypointDir(tmp)).toBeNull();
+    expect(findWaypointDir(tmp, { descend: true })).toBe(
+      path.join(tmp, "SDCARD", WAYPOINT_PATH),
+    );
+  });
+
+  it("matches the waypoint folder by whole segments, ignoring case", () => {
+    const real = makeWaypointDir(tmp);
+    const upper = real.replace(/waypoint$/, "Waypoint");
+    if (fs.existsSync(upper)) {
+      // Case-insensitive file system (macOS, Windows)
+      expect(findWaypointDir(upper)).toBe(upper);
+    }
+    const lookalike = path.join(tmp, "MyAndroid/data/dji.go.v5/files/waypoint");
+    fs.mkdirSync(lookalike, { recursive: true });
+    expect(findWaypointDir(lookalike)).toBeNull();
+  });
+
+  it("keeps the raw name for malformed MTP folder names", () => {
+    const mtp = path.join(tmp, "mtp:host=RC_100%_X");
+    makeWaypointDir(path.join(mtp, "Internal shared storage"));
+    const [device] = findMountedDevices([{ path: mtp, kind: "mtp" }]);
+    expect(device.label).toBe(`MTP device RC 100% X (${mtp})`);
   });
 });
