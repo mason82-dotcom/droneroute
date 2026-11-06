@@ -5,7 +5,9 @@ import path from "node:path";
 import { program } from "commander";
 import chalk from "chalk";
 import { detectDevices, selectDevice } from "./device.js";
-import { uploadKmz } from "./upload.js";
+import { uploadKmz, writeMissionFolder } from "./upload.js";
+import { findWaypointDir } from "./volumes.js";
+import { WAYPOINT_PATH } from "./constants.js";
 import { isAdbAvailable } from "./adb.js";
 import { fileURLToPath } from "node:url";
 
@@ -24,7 +26,15 @@ program
   )
   .version(pkg.version)
   .argument("<file>", "path to a .kmz mission file")
-  .action(async (file: string) => {
+  .option(
+    "-d, --dir <path>",
+    "controller storage mounted at <path> (e.g. via jmtpfs or an MTP file manager)",
+  )
+  .option(
+    "-o, --out <folder>",
+    "write the mission folder to <folder> for copying to the controller manually",
+  )
+  .action(async (file: string, opts: { dir?: string; out?: string }) => {
     // ── Validate the file ───────────────────────────────────────────
     const kmzPath = path.resolve(file);
 
@@ -39,10 +49,61 @@ program
       process.exit(1);
     }
 
-    // ── Detect controllers ──────────────────────────────────────────
-    console.log(chalk.dim("Searching for DJI controllers..."));
+    if (opts.dir && opts.out) {
+      console.error(chalk.red("Error: use either --dir or --out, not both"));
+      process.exit(1);
+    }
 
-    const devices = detectDevices();
+    // ── Export for manual copy (e.g. macOS / Windows with MTP) ───────
+    if (opts.out) {
+      const outDir = path.resolve(opts.out);
+      try {
+        const result = writeMissionFolder(outDir, kmzPath);
+        console.log(chalk.green("\n✓ Mission folder created"));
+        console.log(chalk.dim(`  ${path.dirname(result.remotePath)}`));
+        console.log(
+          chalk.dim("\nCopy the folder ") +
+            result.uuid +
+            chalk.dim(" to the controller's internal storage under"),
+        );
+        console.log(`  ${WAYPOINT_PATH}/`);
+        console.log(
+          chalk.dim(
+            "(Windows: File Explorer, macOS: OpenMTP or Android File Transfer).",
+          ),
+        );
+        console.log(
+          chalk.dim(
+            "DJI Fly only lists routes in that folder; create one route in DJI Fly first if it is missing.",
+          ),
+        );
+      } catch (err: any) {
+        console.error(chalk.red(`\nExport failed: ${err.message}`));
+        process.exit(1);
+      }
+      return;
+    }
+
+    // ── Detect controllers ──────────────────────────────────────────
+    let devices;
+    if (opts.dir) {
+      const waypointPath = findWaypointDir(path.resolve(opts.dir));
+      if (!waypointPath) {
+        console.error(
+          chalk.red(`\nNo DJI Fly waypoint folder found under "${opts.dir}".`),
+        );
+        console.error(
+          chalk.dim(
+            `Expected ${WAYPOINT_PATH} on the controller storage. Create one route in DJI Fly first so the folder exists.`,
+          ),
+        );
+        process.exit(1);
+      }
+      devices = [{ type: "mounted" as const, label: opts.dir, waypointPath }];
+    } else {
+      console.log(chalk.dim("Searching for DJI controllers..."));
+      devices = detectDevices();
+    }
 
     if (devices.length === 0) {
       const hasAdb = isAdbAvailable();
@@ -52,9 +113,31 @@ program
       console.error(
         chalk.dim("  • Connect the controller via USB and power it on"),
       );
+      console.error(
+        chalk.dim(
+          '  • DJI RC 2 / RC-N3 have no USB debugging: choose "File transfer" (MTP)',
+        ),
+      );
+      console.error(
+        chalk.dim(
+          "      Linux:   open the device once in the file manager (GVFS), or mount it and use --dir <path>",
+        ),
+      );
+      console.error(
+        chalk.dim(
+          "      macOS / Windows: use --out <folder> and copy the folder with OpenMTP / File Explorer",
+        ),
+      );
+      console.error(
+        chalk.dim(
+          "  • DJI Fly keeps routes in internal storage; create one route first so the waypoint folder exists",
+        ),
+      );
 
       if (!hasAdb) {
-        console.error(chalk.dim("  • Install adb for USB detection:"));
+        console.error(
+          chalk.dim("  • Controllers with USB debugging: install adb"),
+        );
         console.error(
           chalk.dim("      macOS:   brew install android-platform-tools"),
         );
@@ -63,15 +146,15 @@ program
           chalk.dim("      Windows: included with Android SDK platform-tools"),
         );
       } else {
-        console.error(chalk.dim("  • Enable USB debugging on the controller"));
+        console.error(
+          chalk.dim(
+            "  • Controllers with USB debugging: enable it on the controller",
+          ),
+        );
         console.error(
           chalk.dim("  • Check that the USB cable supports data transfer"),
         );
       }
-
-      console.error(
-        chalk.dim("  • Or insert the controller's SD card directly"),
-      );
       process.exit(1);
     }
 

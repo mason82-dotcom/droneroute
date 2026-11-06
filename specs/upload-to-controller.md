@@ -7,6 +7,9 @@ Send a mission file directly to a DJI controller connected to your computer.
 - Upload a KMZ mission file to a USB-connected DJI remote controller.
 - Auto-detect connected controllers.
 - Choose which controller to upload to if more than one is connected.
+- Upload to a controller without USB debugging (DJI RC 2, RC-N3) over MTP file transfer.
+- Point the tool at a mounted controller folder with `--dir <path>`.
+- Export a ready mission folder with `--out <folder>` and copy it by hand.
 
 ## How it works
 
@@ -20,3 +23,8 @@ Send a mission file directly to a DJI controller connected to your computer.
 - This is a command-line tool — you run it from the terminal, not from the web app.
 - The tool can detect controllers connected via USB storage mode or via ADB (Android Debug Bridge).
 - If multiple controllers are connected, you'll be asked to choose one.
+- On Linux, controllers opened in the file manager (MTP via GVFS) are found automatically.
+- On macOS and Windows, MTP controllers are not mounted as drives: use `--out` and copy the
+  created folder to `Android/data/dji.go.v5/files/waypoint/` with File Explorer or OpenMTP.
+- DJI Fly keeps routes in internal storage. Create one route in DJI Fly first so the waypoint
+  folder exists.
