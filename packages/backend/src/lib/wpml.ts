@@ -1,3 +1,4 @@
+import { effectiveTurnMode } from "@droneroute/shared";
 import type {
   Mission,
   MissionConfig,
@@ -182,7 +183,16 @@ export function buildTemplateKml(mission: Mission): string {
         <wpml:useGlobalSpeed>${wp.useGlobalSpeed ? 1 : 0}</wpml:useGlobalSpeed>
         ${!wp.useGlobalSpeed ? `<wpml:waypointSpeed>${wp.speed}</wpml:waypointSpeed>` : ""}
         <wpml:useGlobalHeadingParam>${wp.useGlobalHeadingParam ? 1 : 0}</wpml:useGlobalHeadingParam>
-        <wpml:useGlobalTurnParam>${wp.useGlobalTurnParam ? 1 : 0}</wpml:useGlobalTurnParam>
+        <wpml:useGlobalTurnParam>${wp.useGlobalTurnParam ? 1 : 0}</wpml:useGlobalTurnParam>${
+          // Required by DJI when useGlobalTurnParam is 0 (DJI Fly reads template.kml)
+          wp.useGlobalTurnParam
+            ? ""
+            : `
+        <wpml:waypointTurnParam>
+          <wpml:waypointTurnMode>${effectiveTurnMode(wp, c.globalTurnMode)}</wpml:waypointTurnMode>
+          <wpml:waypointTurnDampingDist>${wp.turnDampingDist ?? 0}</wpml:waypointTurnDampingDist>
+        </wpml:waypointTurnParam>`
+        }
         <wpml:useStraightLine>${straightLine(wp)}</wpml:useStraightLine>
         <wpml:gimbalPitchAngle>${wp.gimbalPitchAngle}</wpml:gimbalPitchAngle>${headingOverrideXml}${actionGroupXml}
       </Placemark>`;
@@ -244,9 +254,7 @@ export function buildWaylinesWpml(mission: Mission): string {
       const headingMode = wp.useGlobalHeadingParam
         ? c.globalHeadingMode
         : wp.headingMode || c.globalHeadingMode;
-      const turnMode = wp.useGlobalTurnParam
-        ? c.globalTurnMode
-        : wp.turnMode || c.globalTurnMode;
+      const turnMode = effectiveTurnMode(wp, c.globalTurnMode);
       const speed = wp.useGlobalSpeed ? c.autoFlightSpeed : wp.speed;
 
       // POI pointing: compute bearing or emit POI coordinates

@@ -503,6 +503,8 @@ export function generatePencil(params: PencilParams): TemplateResult {
       gimbalPitchAngle,
       turnMode: "toPointAndPassWithContinuityCurvature" as const,
       useGlobalTurnParam: false,
+      // A freehand path is meant to be flown smoothly, not as a polygon.
+      useStraightLine: false,
       actions: [],
     }),
   );

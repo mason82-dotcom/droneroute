@@ -6,6 +6,7 @@ import {
   Gauge,
   SlidersHorizontal,
 } from "lucide-react";
+import { effectiveTurnMode, isCurvatureTurnMode } from "@droneroute/shared";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -118,6 +119,22 @@ export function BulkActionToolbar() {
     selectedWaypointIndices,
     "poiId",
   );
+
+  // Straight/curved segment: only meaningful when every selected waypoint uses a
+  // curve turn mode (DJI requires useStraightLine there).
+  const selected = waypoints.filter((w) =>
+    selectedWaypointIndices.has(w.index),
+  );
+  const allCurvature =
+    selected.length > 0 &&
+    selected.every((w) =>
+      isCurvatureTurnMode(effectiveTurnMode(w, config.globalTurnMode)),
+    );
+  const segmentSelectValue = selected.every((w) => w.useStraightLine !== false)
+    ? "straight"
+    : selected.every((w) => w.useStraightLine === false)
+      ? "curved"
+      : "mixed";
 
   const headingSelectValue =
     commonUseGlobalHeading === true
@@ -409,14 +426,23 @@ export function BulkActionToolbar() {
                     value={turnSelectValue}
                     onValueChange={(v) => {
                       if (v === "mixed") return;
-                      if (v === "global") {
-                        updateSelectedWaypoints({ useGlobalTurnParam: true });
-                      } else {
-                        updateSelectedWaypoints({
-                          useGlobalTurnParam: false,
-                          turnMode: v as TurnMode,
-                        });
-                      }
+                      const next =
+                        v === "global"
+                          ? { useGlobalTurnParam: true }
+                          : {
+                              useGlobalTurnParam: false,
+                              turnMode: v as TurnMode,
+                            };
+                      const mode =
+                        v === "global"
+                          ? config.globalTurnMode
+                          : (v as TurnMode);
+                      // Leaving the curve modes: the straight/curved choice no longer applies
+                      updateSelectedWaypoints(
+                        isCurvatureTurnMode(mode)
+                          ? next
+                          : { ...next, useStraightLine: undefined },
+                      );
                     }}
                   >
                     <SelectTrigger className="h-7 text-xs mt-0.5">
@@ -441,6 +467,36 @@ export function BulkActionToolbar() {
                       <SelectItem value="toPointAndPassWithContinuityCurvature">
                         Pass point (curve)
                       </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              {allCurvature && (
+                <div>
+                  <Label className="text-[10px] text-muted-foreground">
+                    Segment to next WP
+                  </Label>
+                  <Select
+                    value={segmentSelectValue}
+                    onValueChange={(v) => {
+                      if (v === "mixed") return;
+                      updateSelectedWaypoints({
+                        useStraightLine: v === "straight",
+                      });
+                    }}
+                  >
+                    <SelectTrigger className="h-7 text-xs mt-0.5">
+                      <SelectValue placeholder="Mixed" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {segmentSelectValue === "mixed" && (
+                        <SelectItem value="mixed" disabled>
+                          Mixed
+                        </SelectItem>
+                      )}
+                      <SelectItem value="straight">Straight line</SelectItem>
+                      <SelectItem value="curved">Curved</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

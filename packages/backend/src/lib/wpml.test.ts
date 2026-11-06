@@ -68,3 +68,79 @@ describe("useStraightLine (#74)", () => {
     ]);
   });
 });
+
+describe("useStraightLine review fixes", () => {
+  it("writes the turn mode of non-global waypoints into template.kml", () => {
+    const m = mission([
+      wp(0, {
+        useGlobalTurnParam: false,
+        turnMode: "toPointAndPassWithContinuityCurvature",
+      }),
+      wp(1),
+    ]);
+    const template = buildTemplateKml(m);
+    expect(values(template, "waypointTurnMode")).toEqual([
+      "toPointAndPassWithContinuityCurvature",
+    ]);
+  });
+
+  it("keeps turnMode through an export/import round trip", async () => {
+    const m = mission([
+      wp(0, {
+        useGlobalTurnParam: false,
+        turnMode: "toPointAndStopWithContinuityCurvature",
+      }),
+      wp(1, {
+        useGlobalTurnParam: false,
+        turnMode: "toPointAndPassWithContinuityCurvature",
+        useStraightLine: false,
+      }),
+    ]);
+    const parsed = await parseKmz(await generateKmzBuffer(m));
+    expect(parsed.waypoints.map((w) => w.turnMode)).toEqual([
+      "toPointAndStopWithContinuityCurvature",
+      "toPointAndPassWithContinuityCurvature",
+    ]);
+  });
+
+  it("reads a missing useStraightLine like DJI: global value, else curved for curve modes", async () => {
+    const m = mission([
+      wp(0, {
+        useGlobalTurnParam: false,
+        turnMode: "toPointAndStopWithContinuityCurvature",
+      }),
+      wp(1, {
+        useGlobalTurnParam: false,
+        turnMode: "toPointAndStopWithDiscontinuityCurvature",
+      }),
+    ]);
+    const strip = (xml: string) =>
+      xml.replace(/\s*<wpml:useStraightLine>[01]<\/wpml:useStraightLine>/g, "");
+    const JSZip = (await import("jszip")).default;
+
+    const withoutAny = new JSZip();
+    withoutAny.file(
+      "wpmz/template.kml",
+      strip(buildTemplateKml(m)).replace(
+        /\s*<wpml:globalUseStraightLine>1<\/wpml:globalUseStraightLine>/,
+        "",
+      ),
+    );
+    withoutAny.file("wpmz/waylines.wpml", strip(buildWaylinesWpml(m)));
+    const a = await parseKmz(
+      await withoutAny.generateAsync({ type: "nodebuffer" }),
+    );
+    expect(a.waypoints.map((w) => w.useStraightLine)).toEqual([
+      false,
+      undefined,
+    ]);
+
+    const globalOnly = new JSZip();
+    globalOnly.file("wpmz/template.kml", strip(buildTemplateKml(m)));
+    globalOnly.file("wpmz/waylines.wpml", strip(buildWaylinesWpml(m)));
+    const b = await parseKmz(
+      await globalOnly.generateAsync({ type: "nodebuffer" }),
+    );
+    expect(b.waypoints[0].useStraightLine).toBe(true);
+  });
+});
