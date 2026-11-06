@@ -1,5 +1,6 @@
 import type {
   CameraProfile,
+  OrthoPlan,
   Waypoint,
   PointOfInterest,
   WaypointAction,
@@ -96,8 +97,6 @@ export interface GridParams {
   orthoMode: boolean;
   frontOverlap: number; // % overlap between photos on a line
   sideOverlap: number; // % overlap between neighbouring lines
-  /** Camera of the mission payload; orthomosaic mode needs it. */
-  camera?: CameraProfile;
 }
 
 export interface FacadeParams {
@@ -130,6 +129,8 @@ export type TemplateParams =
 export interface TemplateResult {
   waypoints: Omit<Waypoint, "index" | "name">[];
   pois: Omit<PointOfInterest, "id">[];
+  /** Spacing used by a grid survey in orthomosaic mode. */
+  ortho?: OrthoPlan;
 }
 
 // ── Default Params ───────────────────────────────────────
@@ -223,7 +224,15 @@ export function generateOrbit(params: OrbitParams): TemplateResult {
   return { waypoints, pois };
 }
 
-export function generateGrid(params: GridParams): TemplateResult {
+/**
+ * Lawn-mower grid survey. In orthomosaic mode the line and photo spacing come
+ * from `camera` (the mission payload) and the overlaps; without a camera the
+ * manual line spacing is used.
+ */
+export function generateGrid(
+  params: GridParams,
+  camera?: CameraProfile,
+): TemplateResult {
   const {
     corner1,
     corner2,
@@ -235,7 +244,6 @@ export function generateGrid(params: GridParams): TemplateResult {
     orthoMode,
     frontOverlap,
     sideOverlap,
-    camera,
   } = params;
   const ortho =
     orthoMode && camera
@@ -352,7 +360,7 @@ export function generateGrid(params: GridParams): TemplateResult {
     waypoints.reverse();
   }
 
-  return { waypoints, pois: [] };
+  return { waypoints, pois: [], ...(ortho && { ortho }) };
 }
 
 export function generateFacade(params: FacadeParams): TemplateResult {

@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { Source, Layer, Marker, useMap } from "react-map-gl/maplibre";
 import { useMissionStore } from "@/store/missionStore";
 import { findMissionModel } from "@droneroute/shared";
@@ -71,6 +71,13 @@ export function TemplateDrawHandler() {
     [missionConfig],
   );
   const camera = missionModel?.payload.camera;
+  const existingWaypointCount = useMissionStore((s) => s.waypoints.length);
+  // Kept across grids while the template tool is open: the pilot confirms the
+  // camera model once, and the last orthomosaic settings are reused.
+  const [confirmedModel, setConfirmedModel] = useState<string | null>(null);
+  const lastGridSettings = useRef<
+    Partial<Pick<GridParams, "orthoMode" | "frontOverlap" | "sideOverlap">>
+  >({});
   const { current: map } = useMap();
 
   const [dragging, setDragging] = useState(false);
@@ -150,6 +157,7 @@ export function TemplateDrawHandler() {
       } else if (tm === "grid") {
         setGridParams({
           ...DEFAULT_GRID_PARAMS,
+          ...lastGridSettings.current,
           corner1: finalDrag.start,
           corner2: finalDrag.end,
         });
@@ -179,7 +187,7 @@ export function TemplateDrawHandler() {
 
   const preview: TemplateResult | null = useMemo(() => {
     if (orbitParams) return generateOrbit(orbitParams);
-    if (gridParams) return generateGrid({ ...gridParams, camera });
+    if (gridParams) return generateGrid(gridParams, camera);
     if (facadeParams) return generateFacade(facadeParams);
     return null;
   }, [orbitParams, gridParams, facadeParams, camera]);
@@ -267,6 +275,10 @@ export function TemplateDrawHandler() {
   if (!templateMode || templateMode === "pencil") return null;
 
   const handleApply = () => {
+    if (gridParams) {
+      const { orthoMode, frontOverlap, sideOverlap } = gridParams;
+      lastGridSettings.current = { orthoMode, frontOverlap, sideOverlap };
+    }
     if (preview) {
       appendWaypoints(preview.waypoints, preview.pois);
     }
@@ -367,6 +379,11 @@ export function TemplateDrawHandler() {
           onCancel={handleCancel}
           waypointCount={activePreview?.waypoints.length ?? 0}
           missionModel={missionModel}
+          orthoPlan={confirmed ? preview?.ortho : undefined}
+          heightMode={missionConfig.heightMode}
+          existingWaypointCount={existingWaypointCount}
+          confirmedModel={confirmedModel}
+          onConfirmModel={setConfirmedModel}
         />
       )}
     </>

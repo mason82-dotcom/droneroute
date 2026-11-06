@@ -24,4 +24,6 @@ Create common flight patterns automatically instead of placing waypoints one by 
 - You can combine templates — for example, use a grid survey and then add an orbit around a specific structure.
 - Orthomosaic mode needs a payload with a known mapping camera (all listed drones except H20N and PSDK). Spacing
   assumes flat ground at the set altitude above takeoff.
+- In EGM96 height mode the panel warns that the overlap will be lower, because the altitude is above sea level, not
+  above ground. A grid that would push the mission past 5000 waypoints cannot be applied.
 - All generated waypoints behave like normal waypoints after placement. You can move, delete, or change their settings.

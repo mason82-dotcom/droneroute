@@ -140,21 +140,23 @@ const CAMERA_4_3_20MP: CameraProfile = {
   imageWidthPx: 5280,
   imageHeightPx: 3956,
 };
-// 1/2" 48 MP wide cameras (Mavic 3T, M30/M30T), 24 mm equivalent
+// 1/2" 48 MP quad-Bayer wide cameras (Mavic 3T, M30/M30T), 24 mm equivalent.
+// Resolution of the default 12 MP (binned) photos; 48 MP mode halves the GSD.
 const CAMERA_1_2_48MP: CameraProfile = {
   sensorWidthMm: 6.4,
   sensorHeightMm: 4.8,
   focalLengthMm: 4.4,
-  imageWidthPx: 8000,
-  imageHeightPx: 6000,
+  imageWidthPx: 4000,
+  imageHeightPx: 3000,
 };
-// 1/1.3" 48 MP wide cameras (Mavic 3TD, H30/H30T, Mini 4 Pro), 24 mm equivalent
+// 1/1.3" 48 MP quad-Bayer wide cameras (Mavic 3TD, H30/H30T, Mini 4 Pro),
+// 24 mm equivalent. Resolution of the default 12 MP (binned) photos.
 const CAMERA_1_1_3_48MP: CameraProfile = {
   sensorWidthMm: 9.7,
   sensorHeightMm: 7.3,
   focalLengthMm: 6.72,
-  imageWidthPx: 8064,
-  imageHeightPx: 6048,
+  imageWidthPx: 4032,
+  imageHeightPx: 3024,
 };
 // 1/2.3" 12 MP wide cameras (H20/H20T), 24 mm equivalent
 const CAMERA_1_2_3_12MP: CameraProfile = {
@@ -286,6 +288,9 @@ export function findMissionModel(config: {
   );
   return drone && payload ? { drone, payload } : undefined;
 }
+
+/** Most waypoints a saved mission may hold (checked by the backend). */
+export const MAX_MISSION_WAYPOINTS = 5000;
 
 // ── Orthomosaic survey ───────────────────────────────────
 

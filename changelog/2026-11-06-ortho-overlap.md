@@ -15,5 +15,14 @@ Orthomosaic overlap mode for grid surveys (fixes #40).
   explains how to pick a supported payload.
 - The panel shows photo spacing, ground resolution (cm/px) and the estimated
   photo count.
+- Warning in EGM96 height mode, where the altitude is not the height above
+  ground. Apply is blocked when the mission would exceed 5000 waypoints (the
+  backend limit, now shared as `MAX_MISSION_WAYPOINTS`).
+- The ground resolution of 48 MP quad-Bayer cameras uses the default 12 MP
+  photo size.
+- Orthomosaic mode, overlaps and the confirmed model are kept for the next grid
+  while the template tool is open.
+- The template preview draws waypoints as one map layer instead of a DOM marker
+  each, so large grids stay responsive.
 - Frontend unit tests (vitest) for the overlap math and the grid generator.
 - Screenshots: `docs/screenshots/ortho-before.png`, `ortho-after.png`.

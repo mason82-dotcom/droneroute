@@ -43,15 +43,18 @@ describe("computeOrthoPlan", () => {
 describe("generateGrid in orthomosaic mode", () => {
   it("adds photo waypoints so front and side overlap are met", () => {
     const altitude = 60;
-    const result = generateGrid({
-      ...DEFAULT_GRID_PARAMS,
-      corner1,
-      corner2,
-      altitude,
-      orthoMode: true,
-      camera: m3e,
-    });
+    const result = generateGrid(
+      {
+        ...DEFAULT_GRID_PARAMS,
+        corner1,
+        corner2,
+        altitude,
+        orthoMode: true,
+      },
+      m3e,
+    );
     const plan = computeOrthoPlan(m3e, altitude, 80, 70);
+    expect(result.ortho).toEqual(plan);
     const passes = Math.max(2, Math.ceil(100 / plan.lineSpacingM) + 1);
     const perPass = Math.max(2, Math.ceil(200 / plan.photoSpacingM) + 1);
 
@@ -81,10 +84,10 @@ describe("generateGrid in orthomosaic mode", () => {
       corner1,
       corner2,
       orthoMode: true,
-      camera: undefined,
     });
     const manual = generateGrid({ ...DEFAULT_GRID_PARAMS, corner1, corner2 });
     expect(result.waypoints).toEqual(manual.waypoints);
+    expect(result.ortho).toBeUndefined();
   });
 
   it("keeps two waypoints per pass in the normal mode", () => {

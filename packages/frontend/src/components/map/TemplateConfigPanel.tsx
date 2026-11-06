@@ -1,4 +1,4 @@
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect } from "react";
 import { NumericInput } from "@/components/ui/numeric-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -33,10 +33,12 @@ import type {
 } from "@/lib/templates";
 import type {
   DroneModel,
+  HeightMode,
+  OrthoPlan,
   PayloadModel,
   PointOfInterest,
 } from "@droneroute/shared";
-import { computeOrthoPlan } from "@droneroute/shared";
+import { MAX_MISSION_WAYPOINTS } from "@droneroute/shared";
 
 interface TemplateConfigPanelProps {
   type: TemplateType;
@@ -54,6 +56,13 @@ interface TemplateConfigPanelProps {
   pois?: PointOfInterest[];
   /** Mission drone and payload, for the orthomosaic camera profile. */
   missionModel?: { drone: DroneModel; payload: PayloadModel };
+  /** Spacing the grid generator used in orthomosaic mode. */
+  orthoPlan?: OrthoPlan;
+  heightMode?: HeightMode;
+  existingWaypointCount?: number;
+  /** "<drone>/<payload>" the pilot confirmed for orthomosaic mode. */
+  confirmedModel?: string | null;
+  onConfirmModel?: (model: string | null) => void;
 }
 
 export function TemplateConfigPanel({
@@ -71,26 +80,24 @@ export function TemplateConfigPanel({
   waypointCount,
   pois,
   missionModel,
+  orthoPlan,
+  heightMode,
+  existingWaypointCount = 0,
+  confirmedModel,
+  onConfirmModel,
 }: TemplateConfigPanelProps) {
   const unitSystem = usePreferencesStore((s) => s.preferences.unitSystem);
-  // The pilot confirms the camera model once per model; changing the mission
-  // aircraft asks again.
+  // Changing the mission aircraft asks for a new confirmation.
   const modelKey = missionModel
     ? `${missionModel.drone.label}/${missionModel.payload.label}`
     : "";
-  const [confirmedModel, setConfirmedModel] = useState<string | null>(null);
   const camera = missionModel?.payload.camera;
   const orthoActive = type === "grid" && !!gridParams?.orthoMode;
-  const orthoPlan =
-    orthoActive && camera && gridParams
-      ? computeOrthoPlan(
-          camera,
-          gridParams.altitude,
-          gridParams.frontOverlap,
-          gridParams.sideOverlap,
-        )
-      : null;
-  const applyBlocked = orthoActive && (!camera || confirmedModel !== modelKey);
+  const tooManyWaypoints =
+    existingWaypointCount + waypointCount > MAX_MISSION_WAYPOINTS;
+  const applyBlocked =
+    tooManyWaypoints ||
+    (orthoActive && (!camera || confirmedModel !== modelKey));
   const title =
     type === "orbit"
       ? "Orbit"
@@ -375,7 +382,7 @@ export function TemplateConfigPanel({
                       type="checkbox"
                       checked={confirmedModel === modelKey}
                       onChange={(e) =>
-                        setConfirmedModel(e.target.checked ? modelKey : null)
+                        onConfirmModel?.(e.target.checked ? modelKey : null)
                       }
                       className="rounded mt-0.5"
                     />
@@ -385,6 +392,13 @@ export function TemplateConfigPanel({
                       spacing)
                     </span>
                   </label>
+                  {heightMode === "EGM96" && (
+                    <p className="col-span-2 text-[10px] text-orange-400">
+                      Height mode is EGM96 (above sea level): the spacing treats
+                      the altitude as height above ground, so the real overlap
+                      is lower. Use a relative height mode for mapping.
+                    </p>
+                  )}
                   {orthoPlan && (
                     <dl className="col-span-2 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
                       <dt>Photo spacing</dt>
@@ -629,6 +643,13 @@ export function TemplateConfigPanel({
         </div>
       )}
 
+      {tooManyWaypoints && (
+        <p className="mb-2 text-[10px] text-red-400">
+          A mission can hold at most {MAX_MISSION_WAYPOINTS} waypoints. Use a
+          smaller area, a higher altitude or less overlap.
+        </p>
+      )}
+
       {/* Action buttons */}
       <div className="flex gap-2">
         <Button
@@ -636,9 +657,11 @@ export function TemplateConfigPanel({
           onClick={onApply}
           disabled={applyBlocked}
           title={
-            applyBlocked
-              ? "Confirm the aircraft and camera for orthomosaic mode"
-              : undefined
+            tooManyWaypoints
+              ? "Too many waypoints"
+              : applyBlocked
+                ? "Confirm the aircraft and camera for orthomosaic mode"
+                : undefined
           }
           className="flex-1 h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
         >
