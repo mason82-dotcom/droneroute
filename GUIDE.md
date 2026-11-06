@@ -207,6 +207,16 @@ Creates a lawn-mower (zigzag) pattern for systematic area coverage. Click and dr
 - **Line spacing** — distance between parallel passes in meters (default 30m)
 - **Rotation** — rotate the grid pattern (-180 to 180 degrees)
 - **Add photos** — automatically add a "Take Photo" action at each waypoint
+- **Orthomosaic mode** — compute line and photo spacing from the camera and the
+  wanted overlap instead of a manual line spacing:
+  - **Front overlap** — overlap between photos along a pass (default 80%)
+  - **Side overlap** — overlap between neighbouring passes (default 70%)
+  - The camera profile comes from the drone and payload in Mission settings.
+    Confirm the shown model before applying; payloads without a known mapping
+    camera (H20N, PSDK) cannot use this mode.
+  - The panel shows the photo spacing, the ground resolution (cm/px) and the
+    estimated number of photos. Photo waypoints are added along every pass, and
+    the drone stops at each one to take a sharp photo.
 
 **Use cases:** Mapping, photogrammetry, agricultural surveys, search and rescue.
 

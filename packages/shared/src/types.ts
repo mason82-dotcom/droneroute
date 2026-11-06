@@ -137,7 +137,56 @@ export interface DroneModel {
 export interface PayloadModel {
   label: string;
   payloadEnumValue: number;
+  /** Mapping (wide) camera, used for orthomosaic grid surveys. */
+  camera?: CameraProfile;
 }
+
+/**
+ * Camera geometry for photogrammetry. Values are the nominal sensor size and
+ * real focal length of the wide/mapping camera from the DJI specifications.
+ */
+export interface CameraProfile {
+  sensorWidthMm: number;
+  sensorHeightMm: number;
+  focalLengthMm: number;
+  imageWidthPx: number;
+  imageHeightPx: number;
+}
+
+// 4/3" 20 MP mapping cameras (Mavic 3E/3M/3D), 24 mm equivalent
+const CAMERA_4_3_20MP: CameraProfile = {
+  sensorWidthMm: 17.3,
+  sensorHeightMm: 13.0,
+  focalLengthMm: 12.29,
+  imageWidthPx: 5280,
+  imageHeightPx: 3956,
+};
+// 1/2" 48 MP quad-Bayer wide cameras (Mavic 3T, M30/M30T), 24 mm equivalent.
+// Resolution of the default 12 MP (binned) photos; 48 MP mode halves the GSD.
+const CAMERA_1_2_48MP: CameraProfile = {
+  sensorWidthMm: 6.4,
+  sensorHeightMm: 4.8,
+  focalLengthMm: 4.4,
+  imageWidthPx: 4000,
+  imageHeightPx: 3000,
+};
+// 1/1.3" 48 MP quad-Bayer wide cameras (Mavic 3TD, H30/H30T, Mini 4 Pro),
+// 24 mm equivalent. Resolution of the default 12 MP (binned) photos.
+const CAMERA_1_1_3_48MP: CameraProfile = {
+  sensorWidthMm: 9.7,
+  sensorHeightMm: 7.3,
+  focalLengthMm: 6.72,
+  imageWidthPx: 4032,
+  imageHeightPx: 3024,
+};
+// 1/2.3" 12 MP wide cameras (H20/H20T), 24 mm equivalent
+const CAMERA_1_2_3_12MP: CameraProfile = {
+  sensorWidthMm: 6.17,
+  sensorHeightMm: 4.63,
+  focalLengthMm: 4.5,
+  imageWidthPx: 4056,
+  imageHeightPx: 3040,
+};
 
 export const DRONE_MODELS: DroneModel[] = [
   {
@@ -145,8 +194,8 @@ export const DRONE_MODELS: DroneModel[] = [
     droneEnumValue: 60,
     droneSubEnumValue: 0,
     payloads: [
-      { label: "H20", payloadEnumValue: 42 },
-      { label: "H20T", payloadEnumValue: 43 },
+      { label: "H20", payloadEnumValue: 42, camera: CAMERA_1_2_3_12MP },
+      { label: "H20T", payloadEnumValue: 43, camera: CAMERA_1_2_3_12MP },
       { label: "H20N", payloadEnumValue: 61 },
       { label: "PSDK", payloadEnumValue: 65534 },
     ],
@@ -155,13 +204,17 @@ export const DRONE_MODELS: DroneModel[] = [
     label: "DJI M30",
     droneEnumValue: 67,
     droneSubEnumValue: 0,
-    payloads: [{ label: "M30 Camera", payloadEnumValue: 52 }],
+    payloads: [
+      { label: "M30 Camera", payloadEnumValue: 52, camera: CAMERA_1_2_48MP },
+    ],
   },
   {
     label: "DJI M30T",
     droneEnumValue: 67,
     droneSubEnumValue: 1,
-    payloads: [{ label: "M30T Camera", payloadEnumValue: 53 }],
+    payloads: [
+      { label: "M30T Camera", payloadEnumValue: 53, camera: CAMERA_1_2_48MP },
+    ],
   },
   {
     // droneEnumValue 68 appears in real DJI KMZ files (likely Dock-paired M30 variant)
@@ -169,38 +222,44 @@ export const DRONE_MODELS: DroneModel[] = [
     droneEnumValue: 68,
     droneSubEnumValue: 0,
     payloads: [
-      { label: "M30 Camera", payloadEnumValue: 52 },
-      { label: "M30T Camera", payloadEnumValue: 53 },
+      { label: "M30 Camera", payloadEnumValue: 52, camera: CAMERA_1_2_48MP },
+      { label: "M30T Camera", payloadEnumValue: 53, camera: CAMERA_1_2_48MP },
     ],
   },
   {
     label: "DJI Mavic 3E",
     droneEnumValue: 77,
     droneSubEnumValue: 0,
-    payloads: [{ label: "M3E Camera", payloadEnumValue: 66 }],
+    payloads: [
+      { label: "M3E Camera", payloadEnumValue: 66, camera: CAMERA_4_3_20MP },
+    ],
   },
   {
     label: "DJI Mavic 3T",
     droneEnumValue: 77,
     droneSubEnumValue: 1,
-    payloads: [{ label: "M3T Camera", payloadEnumValue: 67 }],
+    payloads: [
+      { label: "M3T Camera", payloadEnumValue: 67, camera: CAMERA_1_2_48MP },
+    ],
   },
   {
     label: "DJI Mavic 3M",
     droneEnumValue: 77,
     droneSubEnumValue: 2,
-    payloads: [{ label: "M3M Camera", payloadEnumValue: 68 }],
+    payloads: [
+      { label: "M3M Camera", payloadEnumValue: 68, camera: CAMERA_4_3_20MP },
+    ],
   },
   {
     label: "DJI M350 RTK",
     droneEnumValue: 89,
     droneSubEnumValue: 0,
     payloads: [
-      { label: "H20", payloadEnumValue: 42 },
-      { label: "H20T", payloadEnumValue: 43 },
+      { label: "H20", payloadEnumValue: 42, camera: CAMERA_1_2_3_12MP },
+      { label: "H20T", payloadEnumValue: 43, camera: CAMERA_1_2_3_12MP },
       { label: "H20N", payloadEnumValue: 61 },
-      { label: "H30", payloadEnumValue: 82 },
-      { label: "H30T", payloadEnumValue: 83 },
+      { label: "H30", payloadEnumValue: 82, camera: CAMERA_1_1_3_48MP },
+      { label: "H30T", payloadEnumValue: 83, camera: CAMERA_1_1_3_48MP },
       { label: "PSDK", payloadEnumValue: 65534 },
     ],
   },
@@ -208,21 +267,91 @@ export const DRONE_MODELS: DroneModel[] = [
     label: "DJI Mavic 3D",
     droneEnumValue: 91,
     droneSubEnumValue: 0,
-    payloads: [{ label: "M3D Camera", payloadEnumValue: 80 }],
+    payloads: [
+      { label: "M3D Camera", payloadEnumValue: 80, camera: CAMERA_4_3_20MP },
+    ],
   },
   {
     label: "DJI Mavic 3TD",
     droneEnumValue: 91,
     droneSubEnumValue: 1,
-    payloads: [{ label: "M3TD Camera", payloadEnumValue: 81 }],
+    payloads: [
+      { label: "M3TD Camera", payloadEnumValue: 81, camera: CAMERA_1_1_3_48MP },
+    ],
   },
   {
     label: "DJI Mini 4 Pro",
     droneEnumValue: 100,
     droneSubEnumValue: 0,
-    payloads: [{ label: "Mini 4 Pro Camera", payloadEnumValue: 100 }],
+    payloads: [
+      {
+        label: "Mini 4 Pro Camera",
+        payloadEnumValue: 100,
+        camera: CAMERA_1_1_3_48MP,
+      },
+    ],
   },
 ];
+
+/** Drone and payload of a mission config, or undefined when unknown. */
+export function findMissionModel(config: {
+  droneEnumValue: number;
+  droneSubEnumValue: number;
+  payloadEnumValue: number;
+}): { drone: DroneModel; payload: PayloadModel } | undefined {
+  const drone = DRONE_MODELS.find(
+    (d) =>
+      d.droneEnumValue === config.droneEnumValue &&
+      d.droneSubEnumValue === config.droneSubEnumValue,
+  );
+  const payload = drone?.payloads.find(
+    (p) => p.payloadEnumValue === config.payloadEnumValue,
+  );
+  return drone && payload ? { drone, payload } : undefined;
+}
+
+/** Most waypoints a saved mission may hold (checked by the backend). */
+export const MAX_MISSION_WAYPOINTS = 5000;
+
+// ── Orthomosaic survey ───────────────────────────────────
+
+export interface OrthoPlan {
+  /** Ground footprint of one photo across the flight line (image width). */
+  footprintAcrossM: number;
+  /** Ground footprint of one photo along the flight line (image height). */
+  footprintAlongM: number;
+  /** Maximum distance between flight lines for the side overlap. */
+  lineSpacingM: number;
+  /** Maximum distance between photos on a line for the front overlap. */
+  photoSpacingM: number;
+  /** Ground sample distance in cm per pixel. */
+  gsdCm: number;
+}
+
+/**
+ * Photo footprint and spacing for a nadir (-90°) survey at `altitudeM` above
+ * ground. The image width lies across the flight line, as with DJI drones
+ * flying with the heading along the route. Overlaps are percentages (0–95).
+ */
+export function computeOrthoPlan(
+  camera: CameraProfile,
+  altitudeM: number,
+  frontOverlapPct: number,
+  sideOverlapPct: number,
+): OrthoPlan {
+  const clamp = (pct: number) => Math.min(95, Math.max(0, pct)) / 100;
+  const footprintAcrossM =
+    (altitudeM * camera.sensorWidthMm) / camera.focalLengthMm;
+  const footprintAlongM =
+    (altitudeM * camera.sensorHeightMm) / camera.focalLengthMm;
+  return {
+    footprintAcrossM,
+    footprintAlongM,
+    lineSpacingM: footprintAcrossM * (1 - clamp(sideOverlapPct)),
+    photoSpacingM: footprintAlongM * (1 - clamp(frontOverlapPct)),
+    gsdCm: (footprintAcrossM / camera.imageWidthPx) * 100,
+  };
+}
 
 // ── Point of Interest ────────────────────────────────────
 

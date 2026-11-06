@@ -8,8 +8,10 @@
  * type-confusion). Each validator returns an error string, or `null` when valid.
  */
 
+import { MAX_MISSION_WAYPOINTS } from "@droneroute/shared";
+
 const MAX_NAME_LEN = 200;
-const MAX_WAYPOINTS = 5000;
+const MAX_WAYPOINTS = MAX_MISSION_WAYPOINTS;
 const MAX_POIS = 2000;
 const MAX_OBSTACLES = 1000;
 const MAX_VERTICES_PER_OBSTACLE = 5000;
