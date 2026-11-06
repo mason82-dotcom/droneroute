@@ -2,6 +2,21 @@ import { create } from "zustand";
 import { api } from "@/lib/api";
 import { useMissionStore } from "./missionStore";
 
+/** Email of the session that expired last; used to detect an account change. */
+let expiredEmail: string | null = null;
+
+/**
+ * After a sign-in: if a different account signs in than the one whose
+ * session expired, the kept mission no longer belongs to the signed-in user,
+ * so saving it must create a new mission instead of updating the old one.
+ */
+function afterSignIn(email: string) {
+  if (expiredEmail && expiredEmail.toLowerCase() !== email.toLowerCase()) {
+    useMissionStore.getState().setMissionId(null);
+  }
+  expiredEmail = null;
+}
+
 interface AuthState {
   token: string | null;
   email: string | null;
@@ -16,6 +31,8 @@ interface AuthState {
   /** Silent sign-in from a trusted network; false when not allowed. */
   trustedLogin: () => Promise<boolean>;
   logout: () => void;
+  /** Drop an expired/invalid session without clearing the current mission. */
+  expireSession: () => void;
   restore: () => void;
   setNeedsVerification: (value: boolean) => void;
 }
@@ -37,6 +54,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         email: string;
         isAdmin: boolean;
       }>("/auth/login", { email, password });
+      afterSignIn(res.email);
       localStorage.setItem("droneroute_token", res.token);
       localStorage.setItem("droneroute_email", res.email);
       localStorage.setItem("droneroute_is_admin", String(res.isAdmin));
@@ -63,6 +81,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         email: string;
         isAdmin: boolean;
       }>("/auth/register", { email, password });
+      afterSignIn(res.email);
       localStorage.setItem("droneroute_token", res.token);
       localStorage.setItem("droneroute_email", res.email);
       localStorage.setItem("droneroute_is_admin", String(res.isAdmin));
@@ -88,6 +107,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         email: string;
         isAdmin: boolean;
       }>("/auth/trusted", {});
+      afterSignIn(res.email);
       localStorage.setItem("droneroute_token", res.token);
       localStorage.setItem("droneroute_email", res.email);
       localStorage.setItem("droneroute_is_admin", String(res.isAdmin));
@@ -114,6 +134,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         email: string;
         isAdmin: boolean;
       }>("/auth/google", { credential });
+      afterSignIn(res.email);
       localStorage.setItem("droneroute_token", res.token);
       localStorage.setItem("droneroute_email", res.email);
       localStorage.setItem("droneroute_is_admin", String(res.isAdmin));
@@ -132,18 +153,19 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: () => {
+    useAuthStore.getState().expireSession();
+    expiredEmail = null;
+    set({ needsVerification: false });
+    useMissionStore.getState().clearMission();
+  },
+
+  expireSession: () => {
+    expiredEmail = localStorage.getItem("droneroute_email") ?? expiredEmail;
     localStorage.removeItem("droneroute_token");
     localStorage.removeItem("droneroute_email");
     localStorage.removeItem("droneroute_is_admin");
     localStorage.removeItem("droneroute_trusted");
-    set({
-      token: null,
-      email: null,
-      userId: null,
-      isAdmin: false,
-      needsVerification: false,
-    });
-    useMissionStore.getState().clearMission();
+    set({ token: null, email: null, userId: null, isAdmin: false });
   },
 
   restore: () => {

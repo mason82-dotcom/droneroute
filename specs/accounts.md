@@ -28,6 +28,8 @@ Settings are saved to your account and sync across devices.
 
 ## Good to know
 
+- When a session expires, the app drops it and asks you to sign in again; the mission on the map is kept. In a trusted network it signs in again automatically.
+- Self-hosted instances also work over plain HTTP (the profile picture is computed without WebCrypto there).
 - Trusted-network sign-in is off unless `TRUSTED_NETWORKS` is set. The shared local account has no password and is not an administrator; anyone can still log in with a personal account instead.
 - Google sign-in is only available in cloud mode. Self-hosted installations use email and password only.
 - If you register with the same email used for Google sign-in, the accounts are linked automatically.

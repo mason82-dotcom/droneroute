@@ -1,11 +1,20 @@
 import type { AdminUser, PaginatedResponse } from "@droneroute/shared";
 import { useMissionStore } from "@/store/missionStore";
 import { useAuthStore } from "@/store/authStore";
+import { useConfigStore } from "@/store/configStore";
 
 const API_BASE = "/api";
 
-async function request<T>(path: string, options?: RequestInit): Promise<T> {
+/** One silent re-login shared by all requests that hit an expired session together. */
+let relogin: Promise<boolean> | null = null;
+
+async function request<T>(
+  path: string,
+  options?: RequestInit,
+  isRetry = false,
+): Promise<T> {
   const token = localStorage.getItem("droneroute_token");
+  const trustedSession = localStorage.getItem("droneroute_trusted") === "true";
   const headers: Record<string, string> = {
     ...(options?.headers as Record<string, string>),
   };
@@ -26,11 +35,39 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
 
+    // Expired or invalid session (authMiddleware marks it with SESSION_INVALID,
+    // unlike e.g. a wrong password): drop it instead of failing every request
+    // with "invalid or expired token".
+    if (res.status === 401 && token && err.code === "SESSION_INVALID") {
+      // Only clear the session this request was sent with; a newer one (from a
+      // parallel re-login or manual sign-in) stays and is used for a retry.
+      const current = localStorage.getItem("droneroute_token");
+      if (current === token) {
+        useAuthStore.getState().expireSession();
+      } else if (current && !isRetry) {
+        return request<T>(path, options, true);
+      }
+      // Re-login silently only if the expired session was the shared local
+      // account of a trusted network, never in place of a personal account.
+      if (
+        !isRetry &&
+        trustedSession &&
+        useConfigStore.getState().trustedLogin
+      ) {
+        relogin ??= useAuthStore
+          .getState()
+          .trustedLogin()
+          .finally(() => {
+            relogin = null;
+          });
+        if (await relogin) return request<T>(path, options, true);
+      }
+      throw new Error("Your session has expired. Please sign in again.");
+    }
+
     // Handle banned user — force logout
     if (res.status === 403 && err.banned) {
-      localStorage.removeItem("droneroute_token");
-      localStorage.removeItem("droneroute_email");
-      localStorage.removeItem("droneroute_is_admin");
+      useAuthStore.getState().expireSession();
       useMissionStore.getState().clearMission();
       window.location.reload();
       throw new Error(err.error || "Your account has been suspended");

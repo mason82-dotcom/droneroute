@@ -2,6 +2,9 @@ import type { Request, Response, NextFunction } from "express";
 import { verifyToken } from "../services/authService.js";
 import { getDb } from "../models/db.js";
 
+/** 401 code for a missing, invalid or expired session (vs. e.g. a wrong password). */
+export const SESSION_INVALID = "SESSION_INVALID";
+
 export interface AuthRequest extends Request {
   userId?: string;
   isAdmin?: boolean;
@@ -14,14 +17,19 @@ export function authMiddleware(
 ): void {
   const header = req.headers.authorization;
   if (!header?.startsWith("Bearer ")) {
-    res.status(401).json({ error: "Missing or invalid authorization header" });
+    res.status(401).json({
+      error: "Missing or invalid authorization header",
+      code: SESSION_INVALID,
+    });
     return;
   }
 
   const token = header.slice(7);
   const payload = verifyToken(token);
   if (!payload) {
-    res.status(401).json({ error: "Invalid or expired token" });
+    res
+      .status(401)
+      .json({ error: "Invalid or expired token", code: SESSION_INVALID });
     return;
   }
 
@@ -33,7 +41,7 @@ export function authMiddleware(
     )
     .get(payload.userId) as any;
   if (!user) {
-    res.status(401).json({ error: "User not found" });
+    res.status(401).json({ error: "User not found", code: SESSION_INVALID });
     return;
   }
   if (user.is_banned) {
