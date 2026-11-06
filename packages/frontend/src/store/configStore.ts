@@ -1,11 +1,16 @@
 import { create } from "zustand";
-import { DEFAULT_MAP_VIEW, type MapViewState } from "@droneroute/shared";
+import {
+  DEFAULT_MAP_SOURCES,
+  DEFAULT_MAP_VIEW,
+  type MapSourcesConfig,
+  type MapViewState,
+} from "@droneroute/shared";
 import { api } from "@/lib/api";
 
 interface ConfigState {
   selfHosted: boolean;
   googleClientId: string | null;
-  mapboxToken: string;
+  mapSources: MapSourcesConfig;
   defaultMapView: MapViewState;
   loaded: boolean;
   fetchConfig: () => Promise<void>;
@@ -14,7 +19,7 @@ interface ConfigState {
 export const useConfigStore = create<ConfigState>((set) => ({
   selfHosted: true,
   googleClientId: null,
-  mapboxToken: "",
+  mapSources: DEFAULT_MAP_SOURCES,
   defaultMapView: DEFAULT_MAP_VIEW,
   loaded: false,
 
@@ -23,13 +28,13 @@ export const useConfigStore = create<ConfigState>((set) => ({
       const res = await api.get<{
         selfHosted: boolean;
         googleClientId?: string;
-        mapboxToken?: string;
+        mapSources?: MapSourcesConfig;
         defaultMapView?: MapViewState;
       }>("/config");
       set({
         selfHosted: res.selfHosted,
         googleClientId: res.googleClientId ?? null,
-        mapboxToken: res.mapboxToken ?? "",
+        mapSources: res.mapSources ?? DEFAULT_MAP_SOURCES,
         defaultMapView: res.defaultMapView ?? DEFAULT_MAP_VIEW,
         loaded: true,
       });
@@ -38,7 +43,7 @@ export const useConfigStore = create<ConfigState>((set) => ({
       set({
         selfHosted: true,
         googleClientId: null,
-        mapboxToken: "",
+        mapSources: DEFAULT_MAP_SOURCES,
         defaultMapView: DEFAULT_MAP_VIEW,
         loaded: true,
       });

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
-import { Source, Layer } from "react-map-gl/mapbox";
+import { Source, Layer } from "react-map-gl/maplibre";
 import type { Waypoint, PointOfInterest } from "@droneroute/shared";
+import { ElevatedLines } from "./ElevatedLines";
 
 interface CameraFrustumProps {
   waypoint: Waypoint;
@@ -148,6 +149,7 @@ export function CameraFrustum({ waypoint, pois, is3D }: CameraFrustumProps) {
       properties: {
         zStart: waypoint.height,
         zEnd: c[2],
+        color: "#94a3b8",
       },
       geometry: {
         type: "LineString" as const,
@@ -159,7 +161,6 @@ export function CameraFrustum({ waypoint, pois, is3D }: CameraFrustumProps) {
 
   // Image plane rectangle outline
   const planeGeojson = useMemo(() => {
-    const coords = corners.map((c) => [c[1], c[0]]);
     // Close the ring and make 4 separate line segments for z-offset
     const features = corners.map((c, i) => {
       const next = corners[(i + 1) % 4];
@@ -168,6 +169,7 @@ export function CameraFrustum({ waypoint, pois, is3D }: CameraFrustumProps) {
         properties: {
           zStart: c[2],
           zEnd: next[2],
+          color: "#94a3b8",
         },
         geometry: {
           type: "LineString" as const,
@@ -252,70 +254,24 @@ export function CameraFrustum({ waypoint, pois, is3D }: CameraFrustumProps) {
       </Source>
 
       {/* 3D: 4 edge lines from camera to image plane corners */}
-      <Source
-        id="camera-frustum-edges"
-        type="geojson"
-        data={edgesGeojson}
-        lineMetrics
-      >
-        <Layer
-          id="camera-frustum-edges-layer"
-          type="line"
-          paint={{
-            "line-color": "#94a3b8",
-            "line-width": 2,
-            "line-opacity": is3D ? 0.7 : 0,
-          }}
-          layout={
-            is3D
-              ? ({
-                  "line-z-offset": [
-                    "interpolate",
-                    ["linear"],
-                    ["line-progress"],
-                    0,
-                    ["get", "zStart"],
-                    1,
-                    ["get", "zEnd"],
-                  ],
-                } as any)
-              : {}
-          }
+      {is3D && (
+        <ElevatedLines
+          id="camera-frustum-edges"
+          data={edgesGeojson}
+          widthPx={2}
+          opacity={0.7}
         />
-      </Source>
+      )}
 
       {/* 3D: image plane rectangle */}
-      <Source
-        id="camera-frustum-plane"
-        type="geojson"
-        data={planeGeojson}
-        lineMetrics
-      >
-        <Layer
-          id="camera-frustum-plane-layer"
-          type="line"
-          paint={{
-            "line-color": "#94a3b8",
-            "line-width": 2,
-            "line-opacity": is3D ? 0.8 : 0,
-          }}
-          layout={
-            is3D
-              ? ({
-                  "line-z-offset": [
-                    "interpolate",
-                    ["linear"],
-                    ["line-progress"],
-                    0,
-                    ["get", "zStart"],
-                    1,
-                    ["get", "zEnd"],
-                  ],
-                } as any)
-              : {}
-          }
+      {is3D && (
+        <ElevatedLines
+          id="camera-frustum-plane"
+          data={planeGeojson}
+          widthPx={2}
+          opacity={0.8}
         />
-      </Source>
+      )}
     </>
   );
 }

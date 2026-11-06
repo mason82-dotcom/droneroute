@@ -4,8 +4,9 @@ import { usePreferencesStore } from "@/store/preferencesStore";
 import { formatHeight, formatSpeed } from "@/lib/units";
 import type { Waypoint } from "@droneroute/shared";
 import { useMemo, useCallback, useState, useEffect } from "react";
-import { useMap } from "react-map-gl/mapbox";
+import { useMap } from "react-map-gl/maplibre";
 import { Marker3D } from "./Marker3D";
+import { altitudeScreenOffset } from "@/lib/map3d";
 
 interface WaypointMarkerProps {
   waypoint: Waypoint;
@@ -61,7 +62,7 @@ function getActionIconsHtml(waypoint: Waypoint): string {
 
 /**
  * Renders a subtle vertical drop line from the waypoint marker down to the ground.
- * Computes pixel distance between altitude and ground using map.project(),
+ * Computes the pixel distance between altitude and ground from the camera,
  * updating on every camera move.
  */
 function DropLine({ waypoint }: { waypoint: Waypoint }) {
@@ -73,11 +74,14 @@ function DropLine({ waypoint }: { waypoint: Waypoint }) {
     const map = mapRef.getMap();
 
     const update = () => {
-      const lngLat = { lng: waypoint.longitude, lat: waypoint.latitude };
-      const atAlt = map.project(lngLat, waypoint.height);
-      const atGround = map.project(lngLat, 0);
+      const [, dy] = altitudeScreenOffset(
+        map,
+        waypoint.longitude,
+        waypoint.latitude,
+        waypoint.height,
+      );
       // Vertical distance in pixels (ground is below, so larger y)
-      setLength(Math.max(0, atGround.y - atAlt.y));
+      setLength(Math.max(0, -dy));
     };
 
     update();

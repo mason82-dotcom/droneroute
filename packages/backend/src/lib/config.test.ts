@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { DEFAULT_MAP_VIEW } from "@droneroute/shared";
-import { resolveDefaultMapView } from "./config.js";
+import { DEFAULT_MAP_SOURCES, DEFAULT_MAP_VIEW } from "@droneroute/shared";
+import { resolveDefaultMapView, resolveMapSources } from "./config.js";
 
 describe("resolveDefaultMapView", () => {
   it("returns the built-in default when DEFAULT_MAP_VIEW is unset", () => {
@@ -65,5 +65,70 @@ describe("resolveDefaultMapView", () => {
       longitude: 180,
       zoom: 0,
     });
+  });
+});
+
+describe("resolveMapSources", () => {
+  it("uses key-free defaults when nothing is configured", () => {
+    expect(resolveMapSources({})).toEqual(DEFAULT_MAP_SOURCES);
+  });
+
+  it("adds an orthophoto layer with bounds", () => {
+    const sources = resolveMapSources({
+      MAP_ORTHOPHOTO_TILES:
+        "https://example.org/wms?SERVICE=WMS&REQUEST=GetMap&BBOX={bbox-epsg-3857}",
+      MAP_ORTHOPHOTO_ATTRIBUTION: "© Example",
+      MAP_ORTHOPHOTO_BOUNDS: "7.5,47.5,10.5,49.8",
+    });
+    expect(sources.orthophoto).toEqual({
+      tiles:
+        "https://example.org/wms?SERVICE=WMS&REQUEST=GetMap&BBOX={bbox-epsg-3857}",
+      attribution: "© Example",
+      bounds: [7.5, 47.5, 10.5, 49.8],
+      tileSize: 256,
+      maxzoom: 22,
+    });
+  });
+
+  it("drops invalid bounds but keeps the layer", () => {
+    const sources = resolveMapSources({
+      MAP_ORTHOPHOTO_TILES: "https://example.org/{z}/{x}/{y}.png",
+      MAP_ORTHOPHOTO_BOUNDS: "10,50,7,48",
+    });
+    expect(sources.orthophoto?.bounds).toBeUndefined();
+  });
+
+  it("ignores URLs that are not http(s)", () => {
+    const sources = resolveMapSources({
+      MAP_STREET_STYLE: "javascript:alert(1)",
+      MAP_EXTRA_STYLE_URL: "ftp://example.org/style.json",
+    });
+    expect(sources.streetStyle).toBe(DEFAULT_MAP_SOURCES.streetStyle);
+    expect(sources.extraStyle).toBeNull();
+  });
+
+  it("adds an extra style and replaces the terrain source", () => {
+    const sources = resolveMapSources({
+      MAP_EXTRA_STYLE_NAME: "basemap.de",
+      MAP_EXTRA_STYLE_URL: "https://example.org/style.json",
+      MAP_TERRAIN_TILES: "https://example.org/dem/{z}/{x}/{y}.png",
+      MAP_TERRAIN_ENCODING: "mapbox",
+      MAP_TERRAIN_MAXZOOM: "12",
+    });
+    expect(sources.extraStyle).toEqual({
+      name: "basemap.de",
+      url: "https://example.org/style.json",
+    });
+    expect(sources.terrain).toMatchObject({
+      encoding: "mapbox",
+      maxzoom: 12,
+      tileSize: 256,
+    });
+  });
+
+  it("turns the geocoder off", () => {
+    expect(resolveMapSources({ MAP_GEOCODER_URL: "off" }).geocoderUrl).toBe(
+      null,
+    );
   });
 });

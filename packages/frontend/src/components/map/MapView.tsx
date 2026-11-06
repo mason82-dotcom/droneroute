@@ -5,12 +5,17 @@ import Map, {
   Popup,
   useMap,
   MapMouseEvent,
-} from "react-map-gl/mapbox";
-import type { LngLatBoundsLike } from "mapbox-gl";
-import mapboxgl from "mapbox-gl";
-import MapboxGeocoder from "@mapbox/mapbox-gl-geocoder";
-import "mapbox-gl/dist/mapbox-gl.css";
-import "@mapbox/mapbox-gl-geocoder/dist/mapbox-gl-geocoder.css";
+} from "react-map-gl/maplibre";
+import type { LngLatBoundsLike, StyleSpecification } from "maplibre-gl";
+import * as maplibregl from "maplibre-gl";
+import MaplibreGeocoder from "@maplibre/maplibre-gl-geocoder";
+import "@/lib/maplibreSetup";
+import "maplibre-gl/dist/maplibre-gl.css";
+import "@maplibre/maplibre-gl-geocoder/dist/maplibre-gl-geocoder.css";
+import { buildSatelliteStyle, type BaseMapKey } from "@/lib/mapStyles";
+import { photonGeocoder } from "@/lib/photonGeocoder";
+import type { ElevatedLineCollection } from "@/lib/map3d";
+import { ElevatedLines } from "./ElevatedLines";
 import { useMissionStore } from "@/store/missionStore";
 import { useConfigStore } from "@/store/configStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
@@ -35,8 +40,9 @@ interface BuildingPopupData {
 }
 
 /** Sets up 3D buildings layer and syncs 2D/3D pitch/rotation. */
-function SceneSetup({ is3D, mapStyle }: { is3D: boolean; mapStyle: string }) {
+function SceneSetup({ is3D, styleKey }: { is3D: boolean; styleKey: string }) {
   const { current: map } = useMap();
+  const buildingsTiles = useConfigStore((s) => s.mapSources.buildingsTiles);
 
   // Buildings layer (re-added on style changes)
   useEffect(() => {
@@ -47,59 +53,51 @@ function SceneSetup({ is3D, mapStyle }: { is3D: boolean; mapStyle: string }) {
       if (!m.isStyleLoaded()) return;
       if (m.getLayer("3d-buildings")) return;
 
-      // Ensure we have a source with building data.
-      // The "composite" source in satellite styles may not include the
-      // building source-layer, so add a dedicated vector tile source.
-      let buildingSource = "composite";
       const style = m.getStyle();
-      const compositeSource = style?.sources?.["composite"] as any;
-      const hasBuildingInComposite = compositeSource?.url?.includes(
-        "mapbox.mapbox-streets",
-      );
-      if (!hasBuildingInComposite) {
-        if (!m.getSource("mapbox-streets")) {
-          m.addSource("mapbox-streets", {
-            type: "vector",
-            url: "mapbox://mapbox.mapbox-streets-v8",
-          });
+      const layers = style?.layers ?? [];
+
+      // Hide the style's own extruded buildings; ours are clickable.
+      for (const layer of layers) {
+        if (
+          layer.type === "fill-extrusion" &&
+          (layer as { "source-layer"?: string })["source-layer"] === "building"
+        ) {
+          m.setLayoutProperty(layer.id, "visibility", "none");
         }
-        buildingSource = "mapbox-streets";
       }
 
-      const layers = style?.layers;
-      let labelLayerId: string | undefined;
-      if (layers) {
-        for (const layer of layers) {
-          if (
-            layer.type === "symbol" &&
-            (layer as any).layout?.["text-field"]
-          ) {
-            labelLayerId = layer.id;
-            break;
-          }
-        }
+      // OpenMapTiles-schema buildings (render_height / render_min_height)
+      if (!m.getSource("buildings")) {
+        m.addSource("buildings", { type: "vector", url: buildingsTiles });
       }
+
+      const labelLayerId = layers.find(
+        (layer) =>
+          layer.type === "symbol" &&
+          (layer as { layout?: Record<string, unknown> }).layout?.[
+            "text-field"
+          ],
+      )?.id;
 
       m.addLayer(
         {
           id: "3d-buildings",
-          source: buildingSource,
+          source: "buildings",
           "source-layer": "building",
-          filter: ["has", "height"],
           type: "fill-extrusion",
           minzoom: 14,
           paint: {
             "fill-extrusion-color": "#aaa",
             "fill-extrusion-height": [
               "coalesce",
-              ["get", "height"],
               ["get", "render_height"],
+              ["get", "height"],
               5,
             ],
             "fill-extrusion-base": [
               "coalesce",
-              ["get", "min_height"],
               ["get", "render_min_height"],
+              ["get", "min_height"],
               0,
             ],
             "fill-extrusion-opacity": 0.5,
@@ -119,7 +117,32 @@ function SceneSetup({ is3D, mapStyle }: { is3D: boolean; mapStyle: string }) {
       m.off("style.load", setup);
       m.off("styledata", setup);
     };
-  }, [map, mapStyle]);
+  }, [map, styleKey, buildingsTiles]);
+
+  // Terrain on in 3D, off in 2D. Managed here rather than through the
+  // `terrain` prop: react-map-gl ignores an `undefined` prop, which would leave
+  // terrain on in 2D and hide flat lines behind buildings. Re-applied after
+  // style switches, once the DEM source is back.
+  useEffect(() => {
+    if (!map) return;
+    const m = map.getMap();
+    const apply = () => {
+      if (!m.isStyleLoaded()) return;
+      const wanted = is3D && m.getSource("terrain-dem");
+      if (wanted && !m.getTerrain()) {
+        m.setTerrain({ source: "terrain-dem", exaggeration: 1 });
+      } else if (!wanted && m.getTerrain()) {
+        m.setTerrain(null);
+      }
+    };
+    apply();
+    m.on("styledata", apply);
+    m.on("sourcedata", apply);
+    return () => {
+      m.off("styledata", apply);
+      m.off("sourcedata", apply);
+    };
+  }, [map, is3D]);
 
   // Toggle pitch/rotation when is3D changes
   useEffect(() => {
@@ -143,21 +166,24 @@ function SceneSetup({ is3D, mapStyle }: { is3D: boolean; mapStyle: string }) {
   return null;
 }
 
-/** Adds a geocoding search box to the map (top-left). */
+/** Adds a geocoding search box to the map (top-left), backed by Photon. */
 function GeocoderControl() {
   const { current: map } = useMap();
-  const mapboxToken = useConfigStore((s) => s.mapboxToken);
-  const geocoderRef = useRef<MapboxGeocoder | null>(null);
+  const geocoderUrl = useConfigStore((s) => s.mapSources.geocoderUrl);
+  const geocoderRef = useRef<MaplibreGeocoder | null>(null);
 
   useEffect(() => {
-    if (!map || !mapboxToken || geocoderRef.current) return;
+    if (!map || !geocoderUrl || geocoderRef.current) return;
     const m = map.getMap();
 
-    const geocoder = new MapboxGeocoder({
-      accessToken: mapboxToken,
-      mapboxgl: mapboxgl as any,
+    const geocoder = new MaplibreGeocoder(photonGeocoder(geocoderUrl), {
+      maplibregl,
       marker: false,
       collapsed: true,
+      showResultsWhileTyping: true,
+      trackProximity: true,
+      minLength: 3,
+      debounceSearch: 400,
       placeholder: "Search location...",
     });
 
@@ -172,7 +198,7 @@ function GeocoderControl() {
       }
       geocoderRef.current = null;
     };
-  }, [map, mapboxToken]);
+  }, [map, geocoderUrl]);
 
   return null;
 }
@@ -268,24 +294,6 @@ function FlightPath({ is3D }: { is3D: boolean }) {
     return { type: "FeatureCollection" as const, features };
   }, [waypoints, warningSegments]);
 
-  // Vertical dashed lines from ground to waypoint height
-  // Use a tiny offset so the line has non-zero length (required for line-progress)
-  const polesGeojson = useMemo(() => {
-    if (waypoints.length === 0) return null;
-    const features = waypoints.map((wp) => ({
-      type: "Feature" as const,
-      properties: { height: wp.height },
-      geometry: {
-        type: "LineString" as const,
-        coordinates: [
-          [wp.longitude, wp.latitude],
-          [wp.longitude + 1e-8, wp.latitude + 1e-8],
-        ],
-      },
-    }));
-    return { type: "FeatureCollection" as const, features };
-  }, [waypoints]);
-
   // Ground shadow path (single continuous line at ground level)
   const groundPathGeojson = useMemo(() => {
     if (waypoints.length < 2) return null;
@@ -322,8 +330,9 @@ function FlightPath({ is3D }: { is3D: boolean }) {
         </Source>
       )}
 
-      {/* Flight path lines — elevated in 3D, flat in 2D */}
-      <Source id="flight-path" type="geojson" data={geojson} lineMetrics={true}>
+      {/* Flight path: dashed line in 2D (kept mounted so its layer order
+          stays stable), elevated ribbon in 3D */}
+      <Source id="flight-path" type="geojson" data={geojson}>
         <Layer
           id="flight-path-line"
           type="line"
@@ -333,61 +342,20 @@ function FlightPath({ is3D }: { is3D: boolean }) {
             "line-opacity": 0.9,
             "line-dasharray": [2, 1.2],
           }}
-          layout={
-            is3D
-              ? ({
-                  "line-cap": "round",
-                  "line-join": "round",
-                  "line-z-offset": [
-                    "interpolate",
-                    ["linear"],
-                    ["line-progress"],
-                    0,
-                    ["get", "zStart"],
-                    1,
-                    ["get", "zEnd"],
-                  ],
-                } as any)
-              : {
-                  "line-cap": "round",
-                  "line-join": "round",
-                }
-          }
+          layout={{
+            "line-cap": "round",
+            "line-join": "round",
+            visibility: is3D ? "none" : "visible",
+          }}
         />
       </Source>
-
-      {/* Vertical dashed lines from ground to waypoint altitude (3D only) */}
-      {is3D && polesGeojson && (
-        <Source
-          id="wp-poles"
-          type="geojson"
-          data={polesGeojson}
-          lineMetrics={true}
-        >
-          <Layer
-            id="wp-poles-layer"
-            type="line"
-            paint={{
-              "line-color": "#94a3b8",
-              "line-width": 1,
-              "line-opacity": 0.5,
-              "line-dasharray": [2, 2],
-            }}
-            layout={
-              {
-                "line-z-offset": [
-                  "interpolate",
-                  ["linear"],
-                  ["line-progress"],
-                  0,
-                  0,
-                  1,
-                  ["get", "height"],
-                ],
-              } as any
-            }
-          />
-        </Source>
+      {is3D && (
+        <ElevatedLines
+          id="flight-path-3d"
+          data={geojson as ElevatedLineCollection}
+          widthPx={3}
+          opacity={0.9}
+        />
       )}
     </>
   );
@@ -430,37 +398,33 @@ function PoiPointingLines({ is3D }: { is3D: boolean }) {
   if (geojson.features.length === 0) return null;
 
   return (
-    <Source id="poi-pointing-lines" type="geojson" data={geojson} lineMetrics>
-      <Layer
-        id="poi-pointing-lines-layer"
-        type="line"
-        paint={{
-          "line-color": ["get", "color"],
-          "line-width": ["get", "width"],
-          "line-opacity": ["get", "opacity"],
-        }}
-        layout={
-          is3D
-            ? ({
-                "line-z-offset": [
-                  "interpolate",
-                  ["linear"],
-                  ["line-progress"],
-                  0,
-                  ["get", "zStart"],
-                  1,
-                  ["get", "zEnd"],
-                ],
-              } as any)
-            : {}
-        }
-      />
-    </Source>
+    <>
+      <Source id="poi-pointing-lines" type="geojson" data={geojson}>
+        <Layer
+          id="poi-pointing-lines-layer"
+          type="line"
+          paint={{
+            "line-color": ["get", "color"],
+            "line-width": ["get", "width"],
+            "line-opacity": ["get", "opacity"],
+          }}
+          layout={{ visibility: is3D ? "none" : "visible" }}
+        />
+      </Source>
+      {is3D && (
+        <ElevatedLines
+          id="poi-pointing-lines-3d"
+          data={geojson as ElevatedLineCollection}
+          widthPx={3}
+          opacity={0.8}
+        />
+      )}
+    </>
   );
 }
 
 export function MapView() {
-  const mapboxToken = useConfigStore((s) => s.mapboxToken);
+  const mapSources = useConfigStore((s) => s.mapSources);
   const defaultMapView = useConfigStore((s) => s.defaultMapView);
   const waypoints = useMissionStore((s) => s.waypoints);
   const pois = useMissionStore((s) => s.pois);
@@ -476,11 +440,30 @@ export function MapView() {
   const addPoi = useMissionStore((s) => s.addPoi);
   const addObstacle = useMissionStore((s) => s.addObstacle);
   const vizPrefs = usePreferencesStore((s) => s.preferences?.visualization);
-  const [mapStyle, setMapStyle] = useState(
-    vizPrefs?.mapStyle === "street"
-      ? "mapbox://styles/mapbox/dark-v11"
-      : "mapbox://styles/mapbox/satellite-streets-v12",
+  const [baseMap, setBaseMap] = useState<BaseMapKey>(
+    vizPrefs?.mapStyle === "street" ? "street" : "satellite",
   );
+  const [satelliteStyle, setSatelliteStyle] =
+    useState<StyleSpecification | null>(null);
+
+  // The satellite style combines imagery with the label layers of a vector
+  // style, so it is assembled once the sources are known.
+  useEffect(() => {
+    let cancelled = false;
+    buildSatelliteStyle(mapSources).then((style) => {
+      if (!cancelled) setSatelliteStyle(style);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [mapSources]);
+
+  const mapStyle: string | StyleSpecification | null =
+    baseMap === "street"
+      ? mapSources.streetStyle
+      : baseMap === "extra" && mapSources.extraStyle
+        ? mapSources.extraStyle.url
+        : satelliteStyle;
   const [is3D, setIs3D] = useState(vizPrefs?.viewMode === "3d");
   const [buildingPopup, setBuildingPopup] = useState<BuildingPopupData | null>(
     null,
@@ -529,7 +512,10 @@ export function MapView() {
               .map(([lng, lat]) => [lat, lng] as [number, number]);
 
             if (vertices.length >= 3) {
-              const height = feature.properties?.height ?? null;
+              const height =
+                feature.properties?.render_height ??
+                feature.properties?.height ??
+                null;
               setBuildingPopup({
                 lng: e.lngLat.lng,
                 lat: e.lngLat.lat,
@@ -560,18 +546,20 @@ export function MapView() {
       ? "crosshair"
       : "grab";
 
-  if (!mapboxToken) {
+  if (!mapStyle) {
     return (
       <div className="relative h-full w-full flex items-center justify-center bg-background text-muted-foreground">
-        <p>Mapbox token not configured. Add MAPBOX_TOKEN to your .env file.</p>
+        <p>Loading map...</p>
       </div>
     );
   }
 
+  const switchButton = (active: boolean) =>
+    `px-2 py-1 text-xs rounded ${active ? "bg-primary text-primary-foreground" : "bg-background/90 text-foreground border border-border"}`;
+
   return (
     <div className={`relative h-full w-full ${cursorClass}`}>
       <Map
-        mapboxAccessToken={mapboxToken}
         initialViewState={{
           longitude: defaultMapView.longitude,
           latitude: defaultMapView.latitude,
@@ -584,19 +572,30 @@ export function MapView() {
         onClick={handleClick}
         doubleClickZoom={false}
         id="main-map"
-        terrain={is3D ? { source: "mapbox-dem", exaggeration: 1 } : undefined}
+        attributionControl={{ compact: true }}
+        onLoad={(e) => {
+          // Start with the attribution collapsed ("i" button) so it does not
+          // cover the style switcher; it expands on click.
+          const attrib = e.target
+            .getContainer()
+            .querySelector(".maplibregl-ctrl-attrib");
+          attrib?.classList.remove("maplibregl-compact-show");
+          attrib?.removeAttribute("open");
+        }}
       >
         {/* DEM source — always present so terrain prop can reference it */}
         <Source
-          id="mapbox-dem"
+          id="terrain-dem"
           type="raster-dem"
-          url="mapbox://mapbox.mapbox-terrain-dem-v1"
-          tileSize={512}
-          maxzoom={14}
+          tiles={[mapSources.terrain.tiles]}
+          encoding={mapSources.terrain.encoding}
+          tileSize={mapSources.terrain.tileSize}
+          maxzoom={mapSources.terrain.maxzoom}
+          attribution={mapSources.terrain.attribution}
         />
         <FitBoundsOnLoad />
         <GeocoderControl />
-        <SceneSetup is3D={is3D} mapStyle={mapStyle} />
+        <SceneSetup is3D={is3D} styleKey={baseMap} />
         <FlightPath is3D={is3D} />
         <PoiPointingLines is3D={is3D} />
         <TemplateDrawHandler />
@@ -663,30 +662,30 @@ export function MapView() {
       {/* Style switcher + 2D/3D toggle */}
       <div className="absolute bottom-4 left-4 z-10 flex gap-1">
         <button
-          className={`px-2 py-1 text-xs rounded ${mapStyle.includes("dark") ? "bg-primary text-primary-foreground" : "bg-background/90 text-foreground border border-border"}`}
-          onClick={() => setMapStyle("mapbox://styles/mapbox/dark-v11")}
+          className={switchButton(baseMap === "street")}
+          onClick={() => setBaseMap("street")}
         >
           Street
         </button>
         <button
-          className={`px-2 py-1 text-xs rounded ${mapStyle.includes("satellite") ? "bg-primary text-primary-foreground" : "bg-background/90 text-foreground border border-border"}`}
-          onClick={() =>
-            setMapStyle("mapbox://styles/mapbox/satellite-streets-v12")
-          }
+          className={switchButton(baseMap === "satellite")}
+          onClick={() => setBaseMap("satellite")}
         >
           Satellite
         </button>
+        {mapSources.extraStyle && (
+          <button
+            className={switchButton(baseMap === "extra")}
+            onClick={() => setBaseMap("extra")}
+          >
+            {mapSources.extraStyle.name}
+          </button>
+        )}
         <div className="w-px bg-border mx-1" />
-        <button
-          className={`px-2 py-1 text-xs rounded ${!is3D ? "bg-primary text-primary-foreground" : "bg-background/90 text-foreground border border-border"}`}
-          onClick={() => setIs3D(false)}
-        >
+        <button className={switchButton(!is3D)} onClick={() => setIs3D(false)}>
           2D
         </button>
-        <button
-          className={`px-2 py-1 text-xs rounded ${is3D ? "bg-primary text-primary-foreground" : "bg-background/90 text-foreground border border-border"}`}
-          onClick={() => setIs3D(true)}
-        >
+        <button className={switchButton(is3D)} onClick={() => setIs3D(true)}>
           3D
         </button>
       </div>

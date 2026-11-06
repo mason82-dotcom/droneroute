@@ -1,4 +1,4 @@
-import { Source, Layer, Marker } from "react-map-gl/mapbox";
+import { Source, Layer, Marker } from "react-map-gl/maplibre";
 import type { Obstacle } from "@droneroute/shared";
 import { useMissionStore } from "@/store/missionStore";
 import { useMemo } from "react";
@@ -17,7 +17,7 @@ export function ObstaclePolygon({ obstacle }: ObstaclePolygonProps) {
 
   // GeoJSON for the polygon fill + outline
   const geojson = useMemo(() => {
-    // Mapbox polygons: [lng, lat], ring must be closed
+    // GeoJSON polygons: [lng, lat], ring must be closed
     const ring = [
       ...obstacle.vertices.map(([lat, lng]) => [lng, lat]),
       [obstacle.vertices[0][1], obstacle.vertices[0][0]],

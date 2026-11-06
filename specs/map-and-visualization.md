@@ -4,10 +4,11 @@ An interactive map where you plan flights and see everything at a glance.
 
 ## What you can do
 
-- Pan, zoom, and interact with a Mapbox GL JS satellite map.
-- Switch between **satellite** and **street** (dark) map styles using the bottom-left buttons.
+- Pan, zoom, and interact with a MapLibre GL JS satellite map. No API key or account is needed.
+- Switch between **satellite** and **street** (dark) map styles using the bottom-left buttons. Self-hosted instances can add a third, named base map (for example an official national map).
+- The satellite map shows worldwide imagery with place, road, and POI labels on top. Self-hosted instances can overlay sharper regional orthophotos (for example 20 cm aerial images of a German state).
 - Toggle between **2D** and **3D** view modes.
-- Search for any location using the **geocoding search box** (top-left magnifying glass icon). Type a place name, address, or landmark and the map flies there.
+- Search for any location using the **geocoding search box** (top-left magnifying glass icon). Type a place name, address, or landmark and the map flies there. Results near the current map view come first.
 - See the flight path as a dashed line connecting all waypoints.
 - See colored lines from waypoints to POIs showing camera aim (green = correct pitch, red = needs adjustment).
 - See obstacle polygons drawn on the map.
@@ -20,12 +21,11 @@ An interactive map where you plan flights and see everything at a glance.
 
 When you switch to 3D:
 
-- **Terrain** — real-world elevation data from Mapbox DEM renders mountains and valleys.
+- **Terrain** — real-world elevation data (Mapterhorn by default) renders mountains and valleys.
 - **Extruded buildings** — 3D buildings appear at zoom level 14+, with height and footprint from OpenStreetMap data.
-- **Elevated flight path** — the flight path line floats at each waypoint's configured altitude, interpolating between segments.
+- **Elevated flight path** — the flight path is drawn as a thin solid ribbon at each waypoint's configured altitude, interpolating between segments.
 - **Elevated markers** — waypoint and POI markers are positioned at their configured height above ground.
 - **Drop lines** — subtle vertical lines connect each waypoint marker down to the ground.
-- **Vertical poles** — dashed lines from ground to waypoint altitude.
 - **Ground shadow** — a faint gray line on the ground traces the flight path from above.
 - **POI pointing lines** — green lines from waypoints to POIs are elevated to match their respective heights.
 - **Camera frustum** — when a waypoint is selected and has a POI target, a translucent slate-gray cone is drawn from the waypoint toward the POI, visualizing the camera's field of view and gimbal pitch.
@@ -34,7 +34,7 @@ When you switch to 3D:
 ## 2D mode (default)
 
 - Flat top-down view with no terrain elevation.
-- No drop lines, poles, or ground shadow.
+- No drop lines or ground shadow.
 - All markers are placed at ground level.
 - Flight path and POI lines are flat.
 - Camera rotation and pitch are locked.
@@ -49,7 +49,8 @@ The map is the central workspace. Everything you do — placing waypoints, POIs,
 - The map opens centered on Barcelona by default. Self-hosted instances can change the starting location by setting `DEFAULT_MAP_VIEW` in their environment (or `docker-compose.yml`), formatted as `lat,lng` or `lat,lng,zoom`, so the map opens on their local area. Invalid or out-of-range values fall back to the built-in default.
 - You can click waypoints and POIs directly on the map to select and edit them.
 - The geocoding search box collapses to an icon when not in use to save space.
-- A Mapbox access token is required. Self-hosted instances must set `MAPBOX_TOKEN` in their `.env` file.
+- No map API key is required. By default the map uses OpenFreeMap (street map, labels, 3D buildings), Esri World Imagery (satellite), Mapterhorn (terrain), and Photon (search). Self-hosted instances can replace each source or add regional orthophotos and an extra base map through the `MAP_*` variables in `.env.example`.
+- Data attributions are behind the **i** button in the bottom-right corner.
 
 ## Airspace restriction zones
 
