@@ -278,7 +278,7 @@ describe("DJI WPML validation", async () => {
     );
   });
 
-  it("warns that aboveGroundLevel is FlightHub 2 only and checks turn damping against the segment", () => {
+  it("rejects aboveGroundLevel (FlightHub 2 only) and checks turn damping against the segment", () => {
     const m = base();
     m.config.heightMode = "aboveGroundLevel";
     m.waypoints[0] = {
@@ -288,7 +288,7 @@ describe("DJI WPML validation", async () => {
       turnDampingDist: 500,
     };
     const issues = validateMission(m);
-    expect(issues.find((i) => i.field === "heightMode")?.level).toBe("warning");
+    expect(issues.find((i) => i.field === "heightMode")?.level).toBe("error");
     expect(
       issues.some(
         (i) =>
@@ -338,5 +338,35 @@ describe("KMZ layout", () => {
       await old.generateAsync({ type: "nodebuffer" }),
     );
     expect(parsed.waypoints).toHaveLength(2);
+  });
+});
+
+describe("height reference export", () => {
+  it("writes executeHeightMode and no template-only coordinate block into waylines.wpml", () => {
+    const xml = buildWaylinesWpml(mission([wp(0), wp(1)]));
+    expect(xml).toContain(
+      "<wpml:executeHeightMode>relativeToStartPoint</wpml:executeHeightMode>",
+    );
+    expect(xml).not.toContain("waylineCoordinateSysParam");
+  });
+
+  it("blocks EGM96 and aboveGroundLevel: validation error and no generated waylines", async () => {
+    const { validateMission } = await import("@droneroute/shared");
+    for (const heightMode of ["EGM96", "aboveGroundLevel"] as const) {
+      const m = mission([wp(0), wp(1)]);
+      m.config = { ...m.config, heightMode };
+      const issue = validateMission(m).find((i) => i.field === "heightMode");
+      expect(issue?.level).toBe("error");
+      expect(() => buildWaylinesWpml(m)).toThrow(/cannot be exported/);
+    }
+  });
+
+  it("warns about relative heights above 120 m (leftover sea-level heights)", async () => {
+    const { validateMission } = await import("@droneroute/shared");
+    const m = mission([wp(0, { height: 350 }), wp(1, { height: 100 })]);
+    const issues = validateMission(m).filter((i) => i.field.endsWith("height"));
+    expect(issues.map((i) => [i.field, i.level])).toEqual([
+      ["waypoint[1].height", "warning"],
+    ]);
   });
 });

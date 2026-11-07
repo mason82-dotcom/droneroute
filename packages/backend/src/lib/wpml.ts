@@ -272,6 +272,12 @@ export function buildTemplateKml(mission: Mission): string {
 // ── Waylines WPML ────────────────────────────────────────
 
 export function buildWaylinesWpml(mission: Mission): string {
+  // executeHeightMode is required (DJI WPML). Only heights relative to the start point are
+  // exported as they are; EGM96/AGL are rejected by validateMission before this is reached.
+  if (mission.config.heightMode !== "relativeToStartPoint")
+    throw new Error(
+      `heightMode ${mission.config.heightMode} cannot be exported for DJI Pilot 2`,
+    );
   const c = mission.config;
   const pois = mission.pois || [];
   const now = Date.now();
@@ -349,17 +355,9 @@ export function buildWaylinesWpml(mission: Mission): string {
   </wpml:missionConfig>
   <Folder>
     <wpml:templateId>0</wpml:templateId>
-    <wpml:waylineId>0</wpml:waylineId>${
-      c.heightMode === "relativeToStartPoint"
-        ? `
-    <wpml:executeHeightMode>relativeToStartPoint</wpml:executeHeightMode>`
-        : ""
-    }
-    <wpml:autoFlightSpeed>${c.autoFlightSpeed}</wpml:autoFlightSpeed>
-    <wpml:waylineCoordinateSysParam>
-      <wpml:coordinateMode>WGS84</wpml:coordinateMode>
-      <wpml:heightMode>${c.heightMode}</wpml:heightMode>
-    </wpml:waylineCoordinateSysParam>${placemarks}
+    <wpml:waylineId>0</wpml:waylineId>
+    <wpml:executeHeightMode>relativeToStartPoint</wpml:executeHeightMode>
+    <wpml:autoFlightSpeed>${c.autoFlightSpeed}</wpml:autoFlightSpeed>${placemarks}
   </Folder>
 </Document>
 </kml>`;
