@@ -4,7 +4,7 @@ Bring in existing missions or export your planned flight as a file ready for DJI
 
 ## What you can do
 
-- **Export** a mission as a KMZ file compatible with DJI drones (WPML format).
+- **Export** a mission as a KMZ file compatible with DJI drones (WPML format). A mission that violates the DJI WPML reference is not exported; the DJI check lists what to fix.
 - **Import** an existing KMZ file to load its waypoints, actions, POIs, and settings into the editor.
 
 ## How it works

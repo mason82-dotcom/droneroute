@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useAuthStore } from "@/store/authStore";
 import { useConfigStore } from "@/store/configStore";
 import { X } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 interface AuthModalProps {
   onClose: () => void;
@@ -77,14 +78,14 @@ export function AuthModal({ onClose }: AuthModalProps) {
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="space-y-1.5">
                   <Label htmlFor="email" className="text-xs">
-                    Email
+                    {t("Email")}
                   </Label>
                   <Input
                     id="email"
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
+                    placeholder={t("you@example.com")}
                     className="h-9 text-sm"
                     required
                     autoFocus
@@ -92,7 +93,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
                 </div>
                 <div className="space-y-1.5">
                   <Label htmlFor="password" className="text-xs">
-                    Password
+                    {t("Password")}
                   </Label>
                   <Input
                     id="password"
@@ -141,7 +142,7 @@ export function AuthModal({ onClose }: AuthModalProps) {
             <>
               {/* Cloud: Google OAuth only */}
               <p className="text-xs text-muted-foreground text-center">
-                Sign in or create an account using your Google account.
+                {t("Sign in or create an account using your Google account.")}
               </p>
               <div className="flex justify-center">
                 <GoogleLogin

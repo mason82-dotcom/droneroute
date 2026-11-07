@@ -153,7 +153,7 @@ export interface CameraProfile {
   imageHeightPx: number;
 }
 
-// 4/3" 20 MP mapping cameras (Mavic 3E/3M/3D), 24 mm equivalent
+// 4/3" 20 MP mapping cameras (Mavic 3E/3M/3D, Matrice 4E), 24 mm equivalent
 const CAMERA_4_3_20MP: CameraProfile = {
   sensorWidthMm: 17.3,
   sensorHeightMm: 13.0,
@@ -161,7 +161,7 @@ const CAMERA_4_3_20MP: CameraProfile = {
   imageWidthPx: 5280,
   imageHeightPx: 3956,
 };
-// 1/2" 48 MP quad-Bayer wide cameras (Mavic 3T, M30/M30T), 24 mm equivalent.
+// 1/2" 48 MP quad-Bayer wide cameras (Mavic 3T/3TA, M30/M30T), 24 mm equivalent.
 // Resolution of the default 12 MP (binned) photos; 48 MP mode halves the GSD.
 const CAMERA_1_2_48MP: CameraProfile = {
   sensorWidthMm: 6.4,
@@ -170,7 +170,7 @@ const CAMERA_1_2_48MP: CameraProfile = {
   imageWidthPx: 4000,
   imageHeightPx: 3000,
 };
-// 1/1.3" 48 MP quad-Bayer wide cameras (Mavic 3TD, H30/H30T, Mini 4 Pro),
+// 1/1.3" 48 MP quad-Bayer wide cameras (Mavic 3TD, Matrice 4T, H30/H30T, Mini 4 Pro),
 // 24 mm equivalent. Resolution of the default 12 MP (binned) photos.
 const CAMERA_1_1_3_48MP: CameraProfile = {
   sensorWidthMm: 9.7,
@@ -251,6 +251,14 @@ export const DRONE_MODELS: DroneModel[] = [
     ],
   },
   {
+    label: "DJI Mavic 3TA",
+    droneEnumValue: 77,
+    droneSubEnumValue: 3,
+    payloads: [
+      { label: "M3TA Camera", payloadEnumValue: 129, camera: CAMERA_1_2_48MP },
+    ],
+  },
+  {
     label: "DJI M350 RTK",
     droneEnumValue: 89,
     droneSubEnumValue: 0,
@@ -277,6 +285,22 @@ export const DRONE_MODELS: DroneModel[] = [
     droneSubEnumValue: 1,
     payloads: [
       { label: "M3TD Camera", payloadEnumValue: 81, camera: CAMERA_1_1_3_48MP },
+    ],
+  },
+  {
+    label: "DJI Matrice 4E",
+    droneEnumValue: 99,
+    droneSubEnumValue: 0,
+    payloads: [
+      { label: "M4E Camera", payloadEnumValue: 88, camera: CAMERA_4_3_20MP },
+    ],
+  },
+  {
+    label: "DJI Matrice 4T",
+    droneEnumValue: 99,
+    droneSubEnumValue: 1,
+    payloads: [
+      { label: "M4T Camera", payloadEnumValue: 89, camera: CAMERA_1_1_3_48MP },
     ],
   },
   {
@@ -403,6 +427,18 @@ export interface Waypoint {
 
 // ── Mission Config ───────────────────────────────────────
 
+// ── Camera lenses for photo/video actions ───────────────
+// WPML lens values as written by DJI Pilot 2 (note DJI's spelling "visable"); several lenses are
+// comma-separated, e.g. "visable,ir". Observed in Pilot 2 routes for M3E/M3T/M4T (payload 66/67/89).
+export type ImageFormat = "visable" | "ir" | "visable,ir";
+/** Payloads with a thermal (IR) camera: H20T, M30T, M3T, M3TD, H30T, M4T, M3TA. */
+export const THERMAL_PAYLOAD_VALUES: readonly number[] = [
+  43, 53, 67, 81, 83, 89, 129,
+];
+export function supportsThermal(payloadEnumValue: number): boolean {
+  return THERMAL_PAYLOAD_VALUES.includes(payloadEnumValue);
+}
+
 export interface MissionConfig {
   droneEnumValue: number;
   droneSubEnumValue: number;
@@ -419,6 +455,8 @@ export interface MissionConfig {
   globalHeadingMode: HeadingMode;
   globalTurnMode: TurnMode;
   gimbalPitchMode: GimbalPitchMode;
+  /** Lenses used by photo/video actions (thermal payloads only). Unset = DJI default (visible). */
+  imageFormat?: ImageFormat;
 }
 
 // ── Mission ──────────────────────────────────────────────
@@ -503,6 +541,14 @@ export interface RasterLayerConfig {
   maxzoom: number;
 }
 
+/** A raster layer drawn over every base map and toggled in the style switcher. */
+export interface OverlayLayerConfig extends RasterLayerConfig {
+  /** Label of the toggle, e.g. "UAS geozones". */
+  name: string;
+  /** Raster opacity between 0.1 and 1. */
+  opacity: number;
+}
+
 /** An additional, selectable base map style. */
 export interface ExtraMapStyle {
   name: string;
@@ -528,6 +574,8 @@ export interface MapSourcesConfig {
   orthophoto: RasterLayerConfig | null;
   /** Optional additional base map style. */
   extraStyle: ExtraMapStyle | null;
+  /** Optional raster overlay over all base maps (e.g. drone geozones). */
+  overlay: OverlayLayerConfig | null;
   terrain: {
     tiles: string;
     encoding: "terrarium" | "mapbox";
@@ -605,6 +653,7 @@ export const DEFAULT_MAP_SOURCES: MapSourcesConfig = {
     maxzoom: 19,
   },
   orthophoto: null,
+  overlay: null,
   extraStyle: null,
   terrain: {
     tiles: "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp",
@@ -616,3 +665,6 @@ export const DEFAULT_MAP_SOURCES: MapSourcesConfig = {
   },
   geocoderUrl: "https://photon.komoot.io/api/",
 };
+
+export { validateMission } from "./wpmlValidation.js";
+export type { ValidationIssue, IssueLevel } from "./wpmlValidation.js";

@@ -1,3 +1,4 @@
+import { themedStreetStyle } from "@/lib/theme";
 import { useCallback, useEffect, useRef, useMemo, useState } from "react";
 import Map, {
   Source,
@@ -31,6 +32,7 @@ import { AirspaceOverlay } from "./AirspaceOverlay";
 import { CameraFrustum } from "./CameraFrustum";
 import { Triangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 interface BuildingPopupData {
   lng: number;
@@ -460,10 +462,20 @@ export function MapView() {
 
   const mapStyle: string | StyleSpecification | null =
     baseMap === "street"
-      ? mapSources.streetStyle
+      ? themedStreetStyle(mapSources.streetStyle)
       : baseMap === "extra" && mapSources.extraStyle
         ? mapSources.extraStyle.url
         : satelliteStyle;
+  const overlay = mapSources.overlay;
+  const [overlayOn, setOverlayOn] = useState(
+    () => localStorage.getItem("droneroute_overlay") !== "off",
+  );
+  const toggleOverlay = () => {
+    setOverlayOn((on) => {
+      localStorage.setItem("droneroute_overlay", on ? "off" : "on");
+      return !on;
+    });
+  };
   const [is3D, setIs3D] = useState(vizPrefs?.viewMode === "3d");
   const [buildingPopup, setBuildingPopup] = useState<BuildingPopupData | null>(
     null,
@@ -549,7 +561,7 @@ export function MapView() {
   if (!mapStyle) {
     return (
       <div className="relative h-full w-full flex items-center justify-center bg-background text-muted-foreground">
-        <p>Loading map...</p>
+        <p>{t("Loading map...")}</p>
       </div>
     );
   }
@@ -593,6 +605,23 @@ export function MapView() {
           maxzoom={mapSources.terrain.maxzoom}
           attribution={mapSources.terrain.attribution}
         />
+        {overlay && overlayOn && (
+          <Source
+            id="map-overlay"
+            type="raster"
+            tiles={[overlay.tiles]}
+            tileSize={overlay.tileSize}
+            maxzoom={overlay.maxzoom}
+            attribution={overlay.attribution}
+            {...(overlay.bounds ? { bounds: overlay.bounds } : {})}
+          >
+            <Layer
+              id="map-overlay"
+              type="raster"
+              paint={{ "raster-opacity": overlay.opacity }}
+            />
+          </Source>
+        )}
         <FitBoundsOnLoad />
         <GeocoderControl />
         <SceneSetup is3D={is3D} styleKey={baseMap} />
@@ -632,7 +661,7 @@ export function MapView() {
           >
             <div className="flex flex-col gap-2 p-1 min-w-[160px]">
               <div className="text-xs text-zinc-300">
-                <strong className="text-white">Building</strong>
+                <strong className="text-white">{t("Building")}</strong>
                 {buildingPopup.height != null && (
                   <span className="ml-2 text-zinc-400">
                     {buildingPopup.height}m tall
@@ -652,7 +681,7 @@ export function MapView() {
                 }}
               >
                 <Triangle className="h-3 w-3" />
-                Convert to obstacle
+                {t("Convert to obstacle")}
               </Button>
             </div>
           </Popup>
@@ -665,13 +694,13 @@ export function MapView() {
           className={switchButton(baseMap === "street")}
           onClick={() => setBaseMap("street")}
         >
-          Street
+          {t("Street")}
         </button>
         <button
           className={switchButton(baseMap === "satellite")}
           onClick={() => setBaseMap("satellite")}
         >
-          Satellite
+          {t("Satellite")}
         </button>
         {mapSources.extraStyle && (
           <button
@@ -680,6 +709,19 @@ export function MapView() {
           >
             {mapSources.extraStyle.name}
           </button>
+        )}
+        {overlay && (
+          <>
+            <div className="w-px bg-border mx-1" />
+            <button
+              className={switchButton(overlayOn)}
+              onClick={toggleOverlay}
+              aria-pressed={overlayOn}
+              title={`${overlayOn ? "Hide" : "Show"} ${overlay.name}`}
+            >
+              {overlay.name}
+            </button>
+          </>
         )}
         <div className="w-px bg-border mx-1" />
         <button className={switchButton(!is3D)} onClick={() => setIs3D(false)}>

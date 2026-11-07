@@ -1,7 +1,7 @@
 import { Router } from "express";
 import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
-import type { Mission } from "@droneroute/shared";
+import { validateMission, type Mission } from "@droneroute/shared";
 import { generateKmzBuffer } from "../services/kmzGenerator.js";
 import { parseKmz } from "../services/kmzParser.js";
 import { getDb } from "../models/db.js";
@@ -52,6 +52,17 @@ kmzRoutes.post(
         obstacles: [],
       };
 
+      // Never export a KMZ that violates the DJI WPML reference (warnings are only shown in the editor).
+      const wpmlErrors = validateMission(mission).filter(
+        (i) => i.level === "error",
+      );
+      if (wpmlErrors.length) {
+        res.status(422).json({
+          error: "Mission violates the DJI WPML specification",
+          issues: wpmlErrors,
+        });
+        return;
+      }
       const buffer = await generateKmzBuffer(mission);
 
       const filename = `${mission.name.replace(/[^a-zA-Z0-9_-]/g, "_")}.kmz`;
@@ -95,6 +106,17 @@ kmzRoutes.get(
         obstacles: JSON.parse(row.obstacles || "[]"),
       };
 
+      // Never export a KMZ that violates the DJI WPML reference (warnings are only shown in the editor).
+      const wpmlErrors = validateMission(mission).filter(
+        (i) => i.level === "error",
+      );
+      if (wpmlErrors.length) {
+        res.status(422).json({
+          error: "Mission violates the DJI WPML specification",
+          issues: wpmlErrors,
+        });
+        return;
+      }
       const buffer = await generateKmzBuffer(mission);
       const filename = `${mission.name.replace(/[^a-zA-Z0-9_-]/g, "_")}.kmz`;
       res.setHeader("Content-Type", "application/vnd.google-earth.kmz");

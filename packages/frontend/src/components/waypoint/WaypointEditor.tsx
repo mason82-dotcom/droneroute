@@ -25,6 +25,7 @@ import {
 } from "@/lib/units";
 import type { HeadingMode, TurnMode } from "@droneroute/shared";
 import { effectiveTurnMode, isCurvatureTurnMode } from "@droneroute/shared";
+import { t } from "@/lib/i18n";
 
 /**
  * Calculate the bearing (heading) from one lat/lng point to another.
@@ -76,7 +77,7 @@ export function WaypointEditorInline({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">
-            Altitude ({heightLabel(unitSystem)})
+            {t("Altitude")} ({heightLabel(unitSystem)})
           </Label>
           <Input
             type="number"
@@ -121,7 +122,7 @@ export function WaypointEditorInline({
 
       <div>
         <div className="flex items-center gap-1">
-          <Label className="text-xs">Gimbal Pitch (&deg;)</Label>
+          <Label className="text-xs">{t("Gimbal Pitch (°)")}</Label>
           {(() => {
             const targetPoi =
               !wp.useGlobalHeadingParam &&
@@ -180,7 +181,7 @@ export function WaypointEditorInline({
       </div>
 
       <div>
-        <Label className="text-xs">Heading mode</Label>
+        <Label className="text-xs">{t("Heading mode")}</Label>
         <Select
           value={
             wp.useGlobalHeadingParam
@@ -214,13 +215,15 @@ export function WaypointEditorInline({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="global">
-              Use global ({config.globalHeadingMode})
+              {t("Use global")} ({config.globalHeadingMode})
             </SelectItem>
-            <SelectItem value="followWayline">Follow wayline</SelectItem>
-            <SelectItem value="manually">Manual</SelectItem>
-            <SelectItem value="fixed">Fixed</SelectItem>
-            <SelectItem value="smoothTransition">Smooth transition</SelectItem>
-            <SelectItem value="towardPOI">Toward POI</SelectItem>
+            <SelectItem value="followWayline">{t("Follow wayline")}</SelectItem>
+            <SelectItem value="manually">{t("Manual")}</SelectItem>
+            <SelectItem value="fixed">{t("Fixed")}</SelectItem>
+            <SelectItem value="smoothTransition">
+              {t("Smooth transition")}
+            </SelectItem>
+            <SelectItem value="towardPOI">{t("Toward POI")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -230,7 +233,7 @@ export function WaypointEditorInline({
           wp.headingMode === "fixed" ||
           wp.headingMode === "smoothTransition") && (
           <div>
-            <Label className="text-xs">Heading angle (&deg;)</Label>
+            <Label className="text-xs">{t("Heading angle (°)")}</Label>
             <Input
               type="number"
               value={wp.headingAngle ?? 0}
@@ -249,7 +252,7 @@ export function WaypointEditorInline({
 
       {!wp.useGlobalHeadingParam && wp.headingMode === "towardPOI" && (
         <div>
-          <Label className="text-xs">Target POI</Label>
+          <Label className="text-xs">{t("Target POI")}</Label>
           <Select
             value={wp.poiId || "none"}
             onValueChange={(v) =>
@@ -257,10 +260,10 @@ export function WaypointEditorInline({
             }
           >
             <SelectTrigger className="h-8 text-xs">
-              <SelectValue placeholder="Select POI..." />
+              <SelectValue placeholder={t("Select POI...")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="none">None</SelectItem>
+              <SelectItem value="none">{t("None")}</SelectItem>
               {pois.map((poi) => (
                 <SelectItem key={poi.id} value={poi.id}>
                   {poi.name}
@@ -270,14 +273,14 @@ export function WaypointEditorInline({
           </Select>
           {pois.length === 0 && (
             <div className="text-[10px] text-muted-foreground mt-0.5">
-              Add POIs on the map first
+              {t("Add POIs on the map first")}
             </div>
           )}
         </div>
       )}
 
       <div>
-        <Label className="text-xs">Turn mode</Label>
+        <Label className="text-xs">{t("Turn mode")}</Label>
         <Select
           value={
             wp.useGlobalTurnParam
@@ -305,16 +308,18 @@ export function WaypointEditorInline({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="global">Use global</SelectItem>
-            <SelectItem value="coordinateTurn">Coordinated turn</SelectItem>
+            <SelectItem value="global">{t("Use global")}</SelectItem>
+            <SelectItem value="coordinateTurn">
+              {t("Coordinated turn")}
+            </SelectItem>
             <SelectItem value="toPointAndStopWithDiscontinuityCurvature">
-              Stop at point (sharp)
+              {t("Stop at point (sharp)")}
             </SelectItem>
             <SelectItem value="toPointAndStopWithContinuityCurvature">
-              Stop at point (curve)
+              {t("Stop at point (curve)")}
             </SelectItem>
             <SelectItem value="toPointAndPassWithContinuityCurvature">
-              Pass point (curve)
+              {t("Pass point (curve)")}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -323,7 +328,7 @@ export function WaypointEditorInline({
       {isCurvatureTurnMode(effectiveTurnMode(wp, config.globalTurnMode)) &&
         !isLastWaypoint && (
           <div>
-            <Label className="text-xs">Segment to next WP</Label>
+            <Label className="text-xs">{t("Segment to next WP")}</Label>
             <Select
               value={wp.useStraightLine === false ? "curved" : "straight"}
               onValueChange={(v) =>
@@ -334,8 +339,8 @@ export function WaypointEditorInline({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="straight">Straight line</SelectItem>
-                <SelectItem value="curved">Curved</SelectItem>
+                <SelectItem value="straight">{t("Straight line")}</SelectItem>
+                <SelectItem value="curved">{t("Curved")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

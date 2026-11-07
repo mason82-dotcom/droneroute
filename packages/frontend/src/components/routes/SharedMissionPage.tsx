@@ -29,6 +29,8 @@ import type {
   PointOfInterest,
   Obstacle,
 } from "@droneroute/shared";
+import { t } from "@/lib/i18n";
+import { themedStreetStyle } from "@/lib/theme";
 
 interface SharedMissionData {
   id: string;
@@ -217,7 +219,7 @@ function SharedMissionMap({
             : {}),
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={streetStyle}
+        mapStyle={themedStreetStyle(streetStyle)}
         doubleClickZoom={false}
         attributionControl={{ compact: true }}
       >
@@ -373,7 +375,7 @@ export function SharedMissionPage({
       window.history.pushState({}, "", "/");
       setCurrentPage("editor");
     } catch (e: any) {
-      toast.error("Clone failed: " + (e.message || "Unknown error"));
+      toast.error(t("Clone failed: ") + (e.message || "Unknown error"));
     } finally {
       setCloning(false);
     }
@@ -395,7 +397,7 @@ export function SharedMissionPage({
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast.error(`Export failed: ${err.message}`);
+      toast.error(t("Export failed: {msg}", { msg: err.message }));
     }
   };
 
@@ -436,10 +438,10 @@ export function SharedMissionPage({
               <div>
                 <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <Route className="h-5 w-5 text-primary" />
-                  Shared route
+                  {t("Shared route")}
                 </h1>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Someone shared a drone mission with you
+                  {t("Someone shared a drone mission with you")}
                 </p>
               </div>
             </div>
@@ -453,7 +455,7 @@ export function SharedMissionPage({
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <div className="text-center">
                   <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-                  <p className="text-sm">Loading shared route...</p>
+                  <p className="text-sm">{t("Loading shared route...")}</p>
                 </div>
               </div>
             )}
@@ -461,9 +463,11 @@ export function SharedMissionPage({
             {!loading && error && (
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                 <Route className="h-12 w-12 mb-4 opacity-30" />
-                <p className="text-lg font-medium mb-1">Route not found</p>
+                <p className="text-lg font-medium mb-1">
+                  {t("Route not found")}
+                </p>
                 <p className="text-sm mb-4">
-                  This shared link may have expired or been revoked
+                  {t("This shared link may have expired or been revoked")}
                 </p>
                 <Button
                   variant="outline"
@@ -473,7 +477,7 @@ export function SharedMissionPage({
                     setCurrentPage("editor");
                   }}
                 >
-                  Go to editor
+                  {t("Go to editor")}
                 </Button>
               </div>
             )}
@@ -521,7 +525,7 @@ export function SharedMissionPage({
                           <div className="bg-background rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                               <Plane className="h-3 w-3 text-purple-400" />
-                              Drone
+                              {t("Drone")}
                             </div>
                             <div className="text-sm font-medium text-foreground">
                               {droneLabel}
@@ -531,7 +535,7 @@ export function SharedMissionPage({
                         <div className="bg-background rounded-lg p-3 border border-border">
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                             <MapPin className="h-3 w-3 text-blue-400" />
-                            Waypoints
+                            {t("Waypoints")}
                           </div>
                           <div className="text-sm font-medium text-foreground">
                             {mission.waypoints.length}
@@ -546,7 +550,7 @@ export function SharedMissionPage({
                           <div className="bg-background rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                               <Route className="h-3 w-3 text-emerald-400" />
-                              Distance
+                              {t("Distance")}
                             </div>
                             <div className="text-sm font-medium text-foreground">
                               {formatDistance(dist)}
@@ -557,7 +561,7 @@ export function SharedMissionPage({
                           <div className="bg-background rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                               <ArrowUp className="h-3 w-3 text-sky-400" />
-                              Max altitude
+                              {t("Max altitude")}
                             </div>
                             <div className="text-sm font-medium text-foreground">
                               {maxAlt} m
@@ -568,7 +572,7 @@ export function SharedMissionPage({
                           <div className="bg-background rounded-lg p-3 border border-border">
                             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-1">
                               <Crosshair className="h-3 w-3 text-orange-400" />
-                              Est. time
+                              {t("Est. time")}
                             </div>
                             <div className="text-sm font-medium text-foreground">
                               {formatFlightTime(flightTime)}
@@ -592,7 +596,7 @@ export function SharedMissionPage({
                       <div className="flex flex-wrap gap-3">
                         <Button onClick={handleLoadReadOnly} className="gap-2">
                           <Route className="h-4 w-4" />
-                          Open in editor
+                          {t("Open in editor")}
                         </Button>
                         <Button
                           variant="outline"
@@ -614,7 +618,7 @@ export function SharedMissionPage({
                             className="gap-2"
                           >
                             <Download className="h-4 w-4" />
-                            Export KMZ
+                            {t("Export KMZ")}
                           </Button>
                         )}
                       </div>

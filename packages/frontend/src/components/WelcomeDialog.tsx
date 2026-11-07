@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { X, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 const STORAGE_KEY = "droneroute_welcome_dismissed";
 
@@ -43,7 +44,9 @@ export function WelcomeDialog() {
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <div className="flex items-center gap-2.5">
             <img src="/droneroute.png" alt="DroneRoute" className="h-7 w-7" />
-            <h2 className="text-base font-bold">Welcome to DroneRoute</h2>
+            <h2 className="text-base font-bold">
+              {t("Welcome to DroneRoute")}
+            </h2>
           </div>
           <button
             onClick={dismiss}
@@ -63,44 +66,44 @@ export function WelcomeDialog() {
 
           <div className="space-y-2">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Quick start
+              {t("Quick start")}
             </h3>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
               <span className="flex items-center gap-2">
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
                   W
                 </kbd>
-                Add waypoint
+                {t("Add waypoint")}
               </span>
               <span className="flex items-center gap-2">
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
                   P
                 </kbd>
-                Add POI
+                {t("Add POI")}
               </span>
               <span className="flex items-center gap-2">
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
                   O
                 </kbd>
-                Orbit template
+                {t("Orbit template")}
               </span>
               <span className="flex items-center gap-2">
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
                   G
                 </kbd>
-                Grid survey
+                {t("Grid survey")}
               </span>
               <span className="flex items-center gap-2">
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
-                  Esc
+                  {t("Esc")}
                 </kbd>
-                Cancel / deselect
+                {t("Cancel / deselect")}
               </span>
               <span className="flex items-center gap-2">
                 <kbd className="px-1.5 py-0.5 text-[10px] font-mono bg-muted rounded border border-border">
-                  Del
+                  {t("Del")}
                 </kbd>
-                Remove selected
+                {t("Remove selected")}
               </span>
             </div>
           </div>
@@ -109,7 +112,7 @@ export function WelcomeDialog() {
         {/* Footer */}
         <div className="px-5 py-4">
           <Button onClick={dismiss} className="w-full h-9 text-sm">
-            Get started
+            {t("Get started")}
           </Button>
         </div>
       </div>

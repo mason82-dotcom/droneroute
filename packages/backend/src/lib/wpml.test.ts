@@ -144,3 +144,162 @@ describe("useStraightLine review fixes", () => {
     expect(b.waypoints[0].useStraightLine).toBe(true);
   });
 });
+
+describe("area templates from DJI Pilot 2", () => {
+  it("reads the waypoints from waylines.wpml when template.kml has no points", async () => {
+    const JSZip = (await import("jszip")).default;
+    const zip = new JSZip();
+    zip.file(
+      "wpmz/template.kml",
+      `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.6"><Document>
+<wpml:missionConfig><wpml:droneInfo><wpml:droneEnumValue>99</wpml:droneEnumValue><wpml:droneSubEnumValue>0</wpml:droneSubEnumValue></wpml:droneInfo>
+<wpml:payloadInfo><wpml:payloadEnumValue>89</wpml:payloadEnumValue></wpml:payloadInfo></wpml:missionConfig>
+<Folder><wpml:templateType>mappingCylinder</wpml:templateType><Placemark><wpml:cylinderRadius>20</wpml:cylinderRadius></Placemark></Folder>
+</Document></kml>`,
+    );
+    zip.file(
+      "wpmz/waylines.wpml",
+      `<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:wpml="http://www.dji.com/wpmz/1.0.6"><Document><Folder>
+<wpml:autoFlightSpeed>8</wpml:autoFlightSpeed>
+<Placemark><Point><coordinates>8.59,49.16</coordinates></Point><wpml:index>0</wpml:index><wpml:executeHeight>60</wpml:executeHeight></Placemark>
+<Placemark><Point><coordinates>8.591,49.161</coordinates></Point><wpml:index>1</wpml:index><wpml:executeHeight>70</wpml:executeHeight></Placemark>
+</Folder></Document></kml>`,
+    );
+    const parsed = await parseKmz(
+      await zip.generateAsync({ type: "nodebuffer" }),
+    );
+    expect(
+      parsed.waypoints.map((w) => [w.longitude, w.latitude, w.height]),
+    ).toEqual([
+      [8.59, 49.16, 60],
+      [8.591, 49.161, 70],
+    ]);
+  });
+});
+
+describe("camera lenses for thermal payloads (Pilot 2 pattern)", () => {
+  const photo = {
+    actionId: 0,
+    actionType: "takePhoto",
+    params: { payloadPositionIndex: 0 },
+  } as any;
+  const rec = {
+    actionId: 1,
+    actionType: "startRecord",
+    params: { payloadPositionIndex: 0 },
+  } as any;
+  const m = mission([wp(0, { actions: [photo] }), wp(1, { actions: [rec] })]);
+  m.config = {
+    ...m.config,
+    droneEnumValue: 99,
+    droneSubEnumValue: 1,
+    payloadEnumValue: 89,
+    imageFormat: "visable,ir",
+  };
+
+  it("writes payloadParam/imageFormat and an explicit lens per photo/video action", () => {
+    const template = buildTemplateKml(m);
+    expect(values(template, "imageFormat")).toEqual(["visable,ir"]);
+    const waylines = buildWaylinesWpml(m);
+    expect(values(waylines, "payloadLensIndex")).toEqual([
+      "visable,ir",
+      "visable,ir",
+    ]);
+    expect(values(waylines, "useGlobalPayloadLensIndex")).toEqual(["0", "0"]);
+    expect(values(waylines, "imageFormat")).toEqual([]); // Pilot 2 keeps it in the template only
+  });
+
+  it("writes nothing without a lens selection or with an unknown value", () => {
+    const plain = mission([wp(0, { actions: [photo] })]);
+    expect(buildTemplateKml(plain)).not.toContain("payloadParam");
+    expect(buildWaylinesWpml(plain)).not.toContain("payloadLensIndex");
+    plain.config = { ...plain.config, imageFormat: "wide</wpml:x>" as any };
+    expect(buildWaylinesWpml(plain)).not.toContain("payloadLensIndex");
+  });
+
+  it("round-trips through KMZ export and import", async () => {
+    const parsed = await parseKmz(await generateKmzBuffer(m));
+    expect(parsed.config.imageFormat).toBe("visable,ir");
+  });
+});
+
+describe("DJI WPML validation", async () => {
+  const { validateMission } = await import("@droneroute/shared");
+  const base = () => {
+    const m = mission([wp(0), wp(1)]);
+    m.config = {
+      ...m.config,
+      droneEnumValue: 77,
+      droneSubEnumValue: 0,
+      payloadEnumValue: 66,
+      heightMode: "relativeToStartPoint",
+    };
+    return m;
+  };
+
+  it("accepts a valid route", () => {
+    expect(validateMission(base()).filter((i) => i.level === "error")).toEqual(
+      [],
+    );
+  });
+
+  it("flags values outside the DJI ranges and enums", () => {
+    const m = base();
+    m.config = {
+      ...m.config,
+      takeOffSecurityHeight: 1,
+      globalTransitionalSpeed: 16,
+      finishAction: "fly" as any,
+      imageFormat: "visable,ir",
+    };
+    m.waypoints[0] = {
+      ...m.waypoints[0],
+      useGlobalHeadingParam: false,
+      headingAngle: 190,
+      actions: [
+        { actionId: 0, actionType: "hover", params: { hoverTime: 0 } } as any,
+      ],
+    };
+    const fields = validateMission(m)
+      .filter((i) => i.level === "error")
+      .map((i) => i.field);
+    expect(fields).toEqual(
+      expect.arrayContaining([
+        "takeOffSecurityHeight",
+        "globalTransitionalSpeed",
+        "finishAction",
+        "payloadParam.imageFormat",
+        "waypoint[1].waypointHeadingAngle",
+        "waypoint[1].action[1].hoverTime",
+      ]),
+    );
+  });
+
+  it("warns that aboveGroundLevel is FlightHub 2 only and checks turn damping against the segment", () => {
+    const m = base();
+    m.config.heightMode = "aboveGroundLevel";
+    m.waypoints[0] = {
+      ...m.waypoints[0],
+      useGlobalTurnParam: false,
+      turnMode: "coordinateTurn",
+      turnDampingDist: 500,
+    };
+    const issues = validateMission(m);
+    expect(issues.find((i) => i.field === "heightMode")?.level).toBe("warning");
+    expect(
+      issues.some(
+        (i) =>
+          i.field === "waypoint[1].waypointTurnDampingDist" &&
+          i.level === "error",
+      ),
+    ).toBe(true);
+  });
+
+  it("writes executeHeightMode for relative heights in waylines.wpml", () => {
+    expect(values(buildWaylinesWpml(base()), "executeHeightMode")).toEqual([
+      "relativeToStartPoint",
+    ]);
+  });
+});

@@ -31,6 +31,7 @@ import {
   speedRange,
 } from "@/lib/units";
 import type { HeadingMode, TurnMode, Waypoint } from "@droneroute/shared";
+import { t } from "@/lib/i18n";
 
 /**
  * Returns the common value for a field across selected waypoints,
@@ -166,7 +167,7 @@ export function BulkActionToolbar() {
             <Select onValueChange={handleAssignPoi}>
               <SelectTrigger className="h-7 w-auto gap-1.5 text-xs border-0 bg-transparent hover:bg-secondary px-2">
                 <Crosshair className="h-3 w-3" />
-                <span>Point to POI</span>
+                <span>{t("Point to POI")}</span>
               </SelectTrigger>
               <SelectContent>
                 {pois.map((poi) => (
@@ -184,10 +185,10 @@ export function BulkActionToolbar() {
             size="sm"
             onClick={() => setShowEditor(!showEditor)}
             className="h-7 text-xs gap-1.5 px-2"
-            title="Edit properties"
+            title={t("Edit properties")}
           >
             <SlidersHorizontal className="h-3 w-3" />
-            Edit
+            {t("Edit")}
           </Button>
 
           <div className="h-4 w-px bg-border" />
@@ -200,7 +201,7 @@ export function BulkActionToolbar() {
             className="h-7 text-xs gap-1.5 px-2 text-destructive hover:text-destructive hover:bg-destructive/10"
           >
             <Trash2 className="h-3 w-3" />
-            Delete
+            {t("Delete")}
           </Button>
 
           <div className="h-4 w-px bg-border" />
@@ -211,7 +212,7 @@ export function BulkActionToolbar() {
             size="icon"
             onClick={clearWaypointSelection}
             className="h-6 w-6 text-muted-foreground hover:text-foreground"
-            title="Clear selection (Esc)"
+            title={t("Clear selection (Esc)")}
           >
             <X className="h-3.5 w-3.5" />
           </Button>
@@ -225,7 +226,7 @@ export function BulkActionToolbar() {
               <div>
                 <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <ArrowUp className="h-2.5 w-2.5" />
-                  Altitude ({heightLabel(unitSystem)})
+                  {t("Altitude")} ({heightLabel(unitSystem)})
                 </Label>
                 <Input
                   type="number"
@@ -266,7 +267,7 @@ export function BulkActionToolbar() {
               <div>
                 <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <Gauge className="h-2.5 w-2.5" />
-                  Speed ({speedLabel(unitSystem)})
+                  {t("Speed")} ({speedLabel(unitSystem)})
                 </Label>
                 <Input
                   type="number"
@@ -309,7 +310,7 @@ export function BulkActionToolbar() {
               {/* Gimbal */}
               <div>
                 <Label className="text-[10px] text-muted-foreground">
-                  Gimbal (&deg;)
+                  {t("Gimbal (°)")}
                 </Label>
                 <Input
                   type="number"
@@ -342,7 +343,7 @@ export function BulkActionToolbar() {
               {/* Heading mode */}
               <div>
                 <Label className="text-[10px] text-muted-foreground">
-                  Heading mode
+                  {t("Heading mode")}
                 </Label>
                 <Select
                   value={headingSelectValue}
@@ -359,26 +360,26 @@ export function BulkActionToolbar() {
                   }}
                 >
                   <SelectTrigger className="h-7 text-xs mt-0.5">
-                    <SelectValue placeholder="Mixed" />
+                    <SelectValue placeholder={t("Mixed")} />
                   </SelectTrigger>
                   <SelectContent>
                     {headingSelectValue === "mixed" && (
                       <SelectItem value="mixed" disabled>
-                        Mixed
+                        {t("Mixed")}
                       </SelectItem>
                     )}
                     <SelectItem value="global">
-                      Use global ({config.globalHeadingMode})
+                      {t("Use global")} ({config.globalHeadingMode})
                     </SelectItem>
                     <SelectItem value="followWayline">
-                      Follow wayline
+                      {t("Follow wayline")}
                     </SelectItem>
-                    <SelectItem value="manually">Manual</SelectItem>
-                    <SelectItem value="fixed">Fixed</SelectItem>
+                    <SelectItem value="manually">{t("Manual")}</SelectItem>
+                    <SelectItem value="fixed">{t("Fixed")}</SelectItem>
                     <SelectItem value="smoothTransition">
-                      Smooth transition
+                      {t("Smooth transition")}
                     </SelectItem>
-                    <SelectItem value="towardPOI">Toward POI</SelectItem>
+                    <SelectItem value="towardPOI">{t("Toward POI")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -387,7 +388,7 @@ export function BulkActionToolbar() {
               {headingSelectValue === "towardPOI" && pois.length > 0 && (
                 <div>
                   <Label className="text-[10px] text-muted-foreground">
-                    Target POI
+                    {t("Target POI")}
                   </Label>
                   <Select
                     value={commonPoiId || "none"}
@@ -405,7 +406,7 @@ export function BulkActionToolbar() {
                       />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">None</SelectItem>
+                      <SelectItem value="none">{t("None")}</SelectItem>
                       {pois.map((poi) => (
                         <SelectItem key={poi.id} value={poi.id}>
                           {poi.name}
@@ -420,7 +421,7 @@ export function BulkActionToolbar() {
               {(headingSelectValue !== "towardPOI" || pois.length === 0) && (
                 <div>
                   <Label className="text-[10px] text-muted-foreground">
-                    Turn mode
+                    {t("Turn mode")}
                   </Label>
                   <Select
                     value={turnSelectValue}
@@ -446,26 +447,26 @@ export function BulkActionToolbar() {
                     }}
                   >
                     <SelectTrigger className="h-7 text-xs mt-0.5">
-                      <SelectValue placeholder="Mixed" />
+                      <SelectValue placeholder={t("Mixed")} />
                     </SelectTrigger>
                     <SelectContent>
                       {turnSelectValue === "mixed" && (
                         <SelectItem value="mixed" disabled>
-                          Mixed
+                          {t("Mixed")}
                         </SelectItem>
                       )}
-                      <SelectItem value="global">Use global</SelectItem>
+                      <SelectItem value="global">{t("Use global")}</SelectItem>
                       <SelectItem value="coordinateTurn">
-                        Coordinated turn
+                        {t("Coordinated turn")}
                       </SelectItem>
                       <SelectItem value="toPointAndStopWithDiscontinuityCurvature">
-                        Stop at point (sharp)
+                        {t("Stop at point (sharp)")}
                       </SelectItem>
                       <SelectItem value="toPointAndStopWithContinuityCurvature">
-                        Stop at point (curve)
+                        {t("Stop at point (curve)")}
                       </SelectItem>
                       <SelectItem value="toPointAndPassWithContinuityCurvature">
-                        Pass point (curve)
+                        {t("Pass point (curve)")}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -475,7 +476,7 @@ export function BulkActionToolbar() {
               {allCurvature && (
                 <div>
                   <Label className="text-[10px] text-muted-foreground">
-                    Segment to next WP
+                    {t("Segment to next WP")}
                   </Label>
                   <Select
                     value={segmentSelectValue}
@@ -487,16 +488,18 @@ export function BulkActionToolbar() {
                     }}
                   >
                     <SelectTrigger className="h-7 text-xs mt-0.5">
-                      <SelectValue placeholder="Mixed" />
+                      <SelectValue placeholder={t("Mixed")} />
                     </SelectTrigger>
                     <SelectContent>
                       {segmentSelectValue === "mixed" && (
                         <SelectItem value="mixed" disabled>
-                          Mixed
+                          {t("Mixed")}
                         </SelectItem>
                       )}
-                      <SelectItem value="straight">Straight line</SelectItem>
-                      <SelectItem value="curved">Curved</SelectItem>
+                      <SelectItem value="straight">
+                        {t("Straight line")}
+                      </SelectItem>
+                      <SelectItem value="curved">{t("Curved")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

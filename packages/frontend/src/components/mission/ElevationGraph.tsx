@@ -2,6 +2,7 @@ import { useRef, useState, useCallback, useEffect } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { useMissionStore } from "@/store/missionStore";
 import type { SelectionMode } from "@/store/missionStore";
+import { t } from "@/lib/i18n";
 
 const GRAPH_HEIGHT = 100;
 const PAD_TOP = 14;
@@ -185,11 +186,11 @@ export function ElevationGraph() {
           ) : (
             <ChevronRight className="h-3 w-3" />
           )}
-          Elevation chart
+          {t("Elevation chart")}
         </button>
         {expanded && (
           <div className="px-3 py-4 text-[10px] text-muted-foreground text-center">
-            Add waypoints to see elevation profile
+            {t("Add waypoints to see elevation profile")}
           </div>
         )}
       </div>
@@ -237,7 +238,7 @@ export function ElevationGraph() {
         ) : (
           <ChevronRight className="h-3 w-3" />
         )}
-        Elevation chart
+        {t("Elevation chart")}
       </button>
 
       {/* Collapsible body */}
@@ -323,7 +324,7 @@ export function ElevationGraph() {
 
               return (
                 <g key={wp.index}>
-                  <title>Drag to adjust altitude</title>
+                  <title>{t("Drag to adjust altitude")}</title>
                   <circle
                     cx={cx}
                     cy={cy}

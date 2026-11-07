@@ -29,6 +29,7 @@ import type {
   MissionConfig,
   PointOfInterest,
 } from "@droneroute/shared";
+import { t } from "@/lib/i18n";
 
 interface SavedMission {
   id: string;
@@ -164,7 +165,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
       await api.delete(`/missions/${id}`);
       setMissions((prev) => prev.filter((m) => m.id !== id));
     } catch (e: any) {
-      toast.error("Failed to delete: " + (e.message || "Unknown error"));
+      toast.error(t("Failed to delete: ") + (e.message || "Unknown error"));
     }
   };
 
@@ -197,7 +198,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
         setTimeout(() => setCopiedId(null), 2000);
       }
     } catch (e: any) {
-      toast.error("Failed to share: " + (e.message || "Unknown error"));
+      toast.error(t("Failed to share: ") + (e.message || "Unknown error"));
     } finally {
       setSharingId(null);
     }
@@ -214,7 +215,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
         ),
       );
     } catch (e: any) {
-      toast.error("Failed to unshare: " + (e.message || "Unknown error"));
+      toast.error(t("Failed to unshare: ") + (e.message || "Unknown error"));
     }
   };
 
@@ -228,7 +229,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
         : [];
 
       if (waypoints.length < 2) {
-        toast.warning("Need at least 2 waypoints to export");
+        toast.warning(t("Need at least 2 waypoints to export"));
         return;
       }
 
@@ -246,7 +247,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast.error(`Export failed: ${err.message}`);
+      toast.error(t("Export failed: {msg}", { msg: err.message }));
     } finally {
       setExportingId(null);
     }
@@ -291,7 +292,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
               <div>
                 <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
                   <Route className="h-5 w-5 text-primary" />
-                  My routes
+                  {t("My routes")}
                 </h1>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {missions.length} saved route
@@ -301,7 +302,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
             </div>
             <Button onClick={handleNewRoute} size="sm" className="gap-1.5">
               <Plus className="h-4 w-4" />
-              New route
+              {t("New route")}
             </Button>
           </div>
         </div>
@@ -313,7 +314,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
               <div className="flex items-center justify-center py-20 text-muted-foreground">
                 <div className="text-center">
                   <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full mx-auto mb-3" />
-                  <p className="text-sm">Loading routes...</p>
+                  <p className="text-sm">{t("Loading routes...")}</p>
                 </div>
               </div>
             )}
@@ -322,13 +323,13 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                 <Route className="h-12 w-12 mb-4 opacity-30" />
                 <p className="text-lg font-medium mb-1">
-                  Sign in to view your routes
+                  {t("Sign in to view your routes")}
                 </p>
                 <p className="text-sm mb-4">
-                  Create an account to save and manage drone missions
+                  {t("Create an account to save and manage drone missions")}
                 </p>
                 <Button size="sm" className="gap-1.5" onClick={onRequestAuth}>
-                  Sign in
+                  {t("Sign in")}
                 </Button>
               </div>
             )}
@@ -337,7 +338,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                 <p className="text-sm text-destructive mb-2">{error}</p>
                 <Button variant="outline" size="sm" onClick={fetchMissions}>
-                  Retry
+                  {t("Retry")}
                 </Button>
               </div>
             )}
@@ -345,13 +346,15 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
             {!loading && !error && token && missions.length === 0 && (
               <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
                 <Route className="h-12 w-12 mb-4 opacity-30" />
-                <p className="text-lg font-medium mb-1">No saved routes yet</p>
+                <p className="text-lg font-medium mb-1">
+                  {t("No saved routes yet")}
+                </p>
                 <p className="text-sm mb-4">
-                  Create your first drone waypoint mission
+                  {t("Create your first drone waypoint mission")}
                 </p>
                 <Button onClick={handleNewRoute} size="sm" className="gap-1.5">
                   <Plus className="h-4 w-4" />
-                  Create route
+                  {t("Create route")}
                 </Button>
               </div>
             )}
@@ -435,7 +438,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
                                 variant="ghost"
                                 size="icon"
                                 className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                                title="Revoke sharing"
+                                title={t("Revoke sharing")}
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   handleUnshare(mission);
@@ -449,7 +452,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
                               size="icon"
                               className="h-7 w-7 text-muted-foreground hover:text-foreground"
                               disabled={exportingId === mission.id}
-                              title="Download KMZ"
+                              title={t("Download KMZ")}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleExportKmz(mission);
@@ -461,7 +464,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
                               variant="ghost"
                               size="icon"
                               className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                              title="Delete route"
+                              title={t("Delete route")}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 handleDelete(mission.id);
@@ -483,7 +486,7 @@ export function RoutesPage({ onRequestAuth }: RoutesPageProps) {
                           {!selfHosted && mission.share_token && (
                             <div className="flex items-center gap-1 text-[11px] text-emerald-400">
                               <Share2 className="h-3 w-3" />
-                              Shared
+                              {t("Shared")}
                             </div>
                           )}
                         </div>

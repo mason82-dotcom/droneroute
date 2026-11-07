@@ -39,6 +39,7 @@ import type {
   PointOfInterest,
 } from "@droneroute/shared";
 import { MAX_MISSION_WAYPOINTS } from "@droneroute/shared";
+import { t } from "@/lib/i18n";
 
 interface TemplateConfigPanelProps {
   type: TemplateType;
@@ -169,7 +170,7 @@ export function TemplateConfigPanel({
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <Label className="text-[10px]">
-              Radius ({distanceLabel(unitSystem)})
+              {t("Radius")} ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayDistance(orbitParams.radiusM, unitSystem)}
@@ -187,7 +188,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Altitude ({heightLabel(unitSystem)})
+              {t("Altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(orbitParams.altitude, unitSystem)}
@@ -204,7 +205,7 @@ export function TemplateConfigPanel({
             />
           </div>
           <div>
-            <Label className="text-[10px]">Points</Label>
+            <Label className="text-[10px]">{t("Points")}</Label>
             <NumericInput
               value={orbitParams.numPoints}
               onChange={(v) => onOrbitChange({ ...orbitParams, numPoints: v })}
@@ -225,7 +226,7 @@ export function TemplateConfigPanel({
                 }
                 className="rounded"
               />
-              Clockwise
+              {t("Clockwise")}
             </label>
             <label className="flex items-center gap-1.5 text-xs cursor-pointer">
               <input
@@ -236,7 +237,7 @@ export function TemplateConfigPanel({
                 }
                 className="rounded"
               />
-              Center POI
+              {t("Center POI")}
             </label>
           </div>
         </div>
@@ -247,7 +248,7 @@ export function TemplateConfigPanel({
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <Label className="text-[10px]">
-              Altitude ({heightLabel(unitSystem)})
+              {t("Altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(gridParams.altitude, unitSystem)}
@@ -265,7 +266,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Line spacing ({distanceLabel(unitSystem)})
+              {t("Line spacing")} ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayDistance(
@@ -288,7 +289,7 @@ export function TemplateConfigPanel({
             />
           </div>
           <div>
-            <Label className="text-[10px]">Rotation (°)</Label>
+            <Label className="text-[10px]">{t("Rotation (°)")}</Label>
             <NumericInput
               value={gridParams.rotationDeg}
               onChange={(v) => onGridChange({ ...gridParams, rotationDeg: v })}
@@ -310,7 +311,7 @@ export function TemplateConfigPanel({
                 }
                 className="rounded"
               />
-              Photos
+              {t("Photos")}
             </label>
             <label className="flex items-center gap-1.5 text-xs cursor-pointer">
               <input
@@ -321,7 +322,7 @@ export function TemplateConfigPanel({
                 }
                 className="rounded"
               />
-              Reverse
+              {t("Reverse")}
             </label>
           </div>
           <label className="col-span-2 flex items-center gap-1.5 text-xs cursor-pointer">
@@ -333,12 +334,12 @@ export function TemplateConfigPanel({
               }
               className="rounded"
             />
-            Orthomosaic mode (spacing from camera and overlap)
+            {t("Orthomosaic mode (spacing from camera and overlap)")}
           </label>
           {gridParams.orthoMode && (
             <>
               <div>
-                <Label className="text-[10px]">Front overlap (%)</Label>
+                <Label className="text-[10px]">{t("Front overlap (%)")}</Label>
                 <NumericInput
                   value={gridParams.frontOverlap}
                   onChange={(v) =>
@@ -353,7 +354,7 @@ export function TemplateConfigPanel({
                 />
               </div>
               <div>
-                <Label className="text-[10px]">Side overlap (%)</Label>
+                <Label className="text-[10px]">{t("Side overlap (%)")}</Label>
                 <NumericInput
                   value={gridParams.sideOverlap}
                   onChange={(v) =>
@@ -401,7 +402,7 @@ export function TemplateConfigPanel({
                   )}
                   {orthoPlan && (
                     <dl className="col-span-2 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px] text-muted-foreground">
-                      <dt>Photo spacing</dt>
+                      <dt>{t("Photo spacing")}</dt>
                       <dd className="text-right text-foreground">
                         {toDisplayDistance(
                           orthoPlan.photoSpacingM,
@@ -409,11 +410,11 @@ export function TemplateConfigPanel({
                         ).toFixed(1)}{" "}
                         {distanceLabel(unitSystem)}
                       </dd>
-                      <dt>Ground resolution</dt>
+                      <dt>{t("Ground resolution")}</dt>
                       <dd className="text-right text-foreground">
                         {orthoPlan.gsdCm.toFixed(2)} cm/px
                       </dd>
-                      <dt>Estimated photos</dt>
+                      <dt>{t("Estimated photos")}</dt>
                       <dd className="text-right text-foreground">
                         {waypointCount}
                       </dd>
@@ -431,7 +432,7 @@ export function TemplateConfigPanel({
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <Label className="text-[10px]">
-              Distance from wall ({distanceLabel(unitSystem)})
+              {t("Distance from wall")} ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayDistance(facadeParams.distanceM, unitSystem)}
@@ -449,7 +450,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Min altitude ({heightLabel(unitSystem)})
+              {t("Min altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(facadeParams.minAltitude, unitSystem)}
@@ -469,7 +470,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Max altitude ({heightLabel(unitSystem)})
+              {t("Max altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(facadeParams.maxAltitude, unitSystem)}
@@ -489,7 +490,7 @@ export function TemplateConfigPanel({
             />
           </div>
           <div>
-            <Label className="text-[10px]">Rows</Label>
+            <Label className="text-[10px]">{t("Rows")}</Label>
             <NumericInput
               value={facadeParams.numRows}
               onChange={(v) => onFacadeChange({ ...facadeParams, numRows: v })}
@@ -501,7 +502,7 @@ export function TemplateConfigPanel({
             />
           </div>
           <div>
-            <Label className="text-[10px]">Columns</Label>
+            <Label className="text-[10px]">{t("Columns")}</Label>
             <NumericInput
               value={facadeParams.numColumns}
               onChange={(v) =>
@@ -527,7 +528,7 @@ export function TemplateConfigPanel({
                 }
                 className="rounded"
               />
-              Photos
+              {t("Photos")}
             </label>
           </div>
         </div>
@@ -537,7 +538,7 @@ export function TemplateConfigPanel({
       {type === "pencil" && pencilParams && onPencilChange && (
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
-            <Label className="text-[10px]">Waypoints</Label>
+            <Label className="text-[10px]">{t("Waypoints")}</Label>
             <NumericInput
               value={pencilParams.numPoints}
               onChange={(v) =>
@@ -552,7 +553,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Altitude ({heightLabel(unitSystem)})
+              {t("Altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(pencilParams.altitude, unitSystem)}
@@ -570,7 +571,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Speed ({speedLabel(unitSystem)})
+              {t("Speed")} ({speedLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplaySpeed(pencilParams.speed, unitSystem)}
@@ -588,7 +589,7 @@ export function TemplateConfigPanel({
             />
           </div>
           <div>
-            <Label className="text-[10px]">Gimbal pitch (°)</Label>
+            <Label className="text-[10px]">{t("Gimbal pitch (°)")}</Label>
             <NumericInput
               value={pencilParams.gimbalPitchAngle}
               onChange={(v) =>
@@ -611,12 +612,12 @@ export function TemplateConfigPanel({
                 }
                 className="rounded"
               />
-              Reverse
+              {t("Reverse")}
             </label>
           </div>
           {pois && pois.length > 0 && (
             <div>
-              <Label className="text-[10px]">Face POI</Label>
+              <Label className="text-[10px]">{t("Face POI")}</Label>
               <Select
                 value={pencilParams.poiId || "none"}
                 onValueChange={(v) =>
@@ -630,7 +631,9 @@ export function TemplateConfigPanel({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">None (follow path)</SelectItem>
+                  <SelectItem value="none">
+                    {t("None (follow path)")}
+                  </SelectItem>
                   {pois.map((poi) => (
                     <SelectItem key={poi.id} value={poi.id}>
                       {poi.name}
@@ -666,7 +669,7 @@ export function TemplateConfigPanel({
           className="flex-1 h-7 text-xs bg-purple-600 hover:bg-purple-700 text-white"
         >
           <Check className="h-3 w-3 mr-1" />
-          Apply
+          {t("Apply")}
         </Button>
         <Button
           variant="outline"
@@ -674,7 +677,7 @@ export function TemplateConfigPanel({
           onClick={onCancel}
           className="h-7 text-xs"
         >
-          Cancel
+          {t("Cancel")}
         </Button>
       </div>
     </div>

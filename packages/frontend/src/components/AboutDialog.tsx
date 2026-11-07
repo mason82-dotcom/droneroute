@@ -8,6 +8,7 @@ import {
   TriangleAlert,
 } from "lucide-react";
 import { GithubIcon } from "@/components/icons/GithubIcon";
+import { t } from "@/lib/i18n";
 
 interface AboutDialogProps {
   onClose: () => void;
@@ -44,7 +45,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
         <div className="flex items-center justify-between px-5 pt-5 pb-0">
           <div className="flex items-center gap-2.5">
             <img src="/droneroute.png" alt="DroneRoute" className="h-7 w-7" />
-            <h2 className="text-base font-bold">DroneRoute</h2>
+            <h2 className="text-base font-bold">{t("DroneRoute")}</h2>
           </div>
           <button
             onClick={onClose}
@@ -64,7 +65,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
 
           {/* Version */}
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Version</span>
+            <span>{t("Version")}</span>
             <a
               href={`https://github.com/fcsonline/droneroute/releases/tag/v${version}`}
               target="_blank"
@@ -92,7 +93,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
               className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <GithubIcon className="h-4 w-4 shrink-0" />
-              GitHub — Star the repo, report bugs, contribute
+              {t("GitHub — Star the repo, report bugs, contribute")}
             </a>
             <a
               href="https://github.com/fcsonline/droneroute/blob/main/GUIDE.md"
@@ -101,7 +102,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
               className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <BookOpen className="h-4 w-4 shrink-0" />
-              User Guide — Features, shortcuts &amp; tips
+              {t("User Guide — Features, shortcuts & tips")}
             </a>
             <a
               href="https://www.npmjs.com/package/droneroute"
@@ -110,7 +111,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
               className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <Terminal className="h-4 w-4 shrink-0" />
-              Upload to RC — npx droneroute mission.kmz
+              {t("Upload to RC — npx droneroute mission.kmz")}
             </a>
             <a
               href="https://github.com/fcsonline/droneroute/issues?q=is%3Aissue%20state%3Aopen%20label%3Aenhancement"
@@ -119,7 +120,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
               className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <Lightbulb className="h-4 w-4 shrink-0" />
-              Feature Requests — Vote &amp; suggest ideas
+              {t("Feature Requests — Vote & suggest ideas")}
             </a>
             <a
               href="https://github.com/fcsonline/droneroute/blob/main/PRIVACY.md"
@@ -128,7 +129,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
               className="flex items-center gap-2.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ShieldCheck className="h-4 w-4 shrink-0" />
-              Privacy &amp; data — what we store and where
+              {t("Privacy & data — what we store and where")}
             </a>
             <div className="mt-2 pt-2 border-t border-border">
               <p className="text-xs text-muted-foreground mb-2">
@@ -155,7 +156,7 @@ export function AboutDialog({ onClose }: AboutDialogProps) {
             <TriangleAlert className="h-3.5 w-3.5 shrink-0 text-amber-500 mt-0.5" />
             <p className="text-[10px] text-muted-foreground leading-relaxed">
               <span className="text-amber-500 font-medium">
-                Active development.
+                {t("Active development.")}
               </span>{" "}
               Provided "as is" without warranty. The authors are not responsible
               for any damage to your drones, equipment, or property. Always

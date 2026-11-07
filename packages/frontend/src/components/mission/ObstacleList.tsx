@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { useMissionStore } from "@/store/missionStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
 import { polygonArea, formatArea } from "@/lib/geo";
+import { t } from "@/lib/i18n";
 
 export function ObstacleList() {
   const {
@@ -23,9 +24,9 @@ export function ObstacleList() {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
         <Triangle className="h-8 w-8 mb-2 opacity-50" />
-        <p className="text-sm">No obstacles yet</p>
+        <p className="text-sm">{t("No obstacles yet")}</p>
         <p className="text-xs mt-1">
-          Use the "Obstacle" button to draw polygon obstacles
+          {t('Use the "Obstacle" button to draw polygon obstacles')}
         </p>
       </div>
     );
@@ -87,7 +88,7 @@ export function ObstacleList() {
                   <div
                     className="text-xs font-medium truncate cursor-text hover:text-red-300 transition-colors"
                     onDoubleClick={(e) => startRename(obstacle.id, e)}
-                    title="Double-click to rename"
+                    title={t("Double-click to rename")}
                   >
                     {obstacle.name}
                   </div>
@@ -106,7 +107,7 @@ export function ObstacleList() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={(e) => toggleEditor(obstacle.id, e)}
-                title="Edit obstacle settings"
+                title={t("Edit obstacle settings")}
               >
                 <Settings className="h-3 w-3" />
               </Button>
@@ -118,7 +119,7 @@ export function ObstacleList() {
                   e.stopPropagation();
                   removeObstacle(obstacle.id);
                 }}
-                title="Remove obstacle"
+                title={t("Remove obstacle")}
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -128,7 +129,7 @@ export function ObstacleList() {
             {isEditorOpen && (
               <div className="ml-4 mr-1 mt-1 mb-2 border-l-2 border-red-400/30 bg-red-500/5 rounded-r-md p-3 space-y-2">
                 <div>
-                  <Label className="text-xs">Description</Label>
+                  <Label className="text-xs">{t("Description")}</Label>
                   <textarea
                     value={obstacle.description}
                     onChange={(e) =>
@@ -137,7 +138,7 @@ export function ObstacleList() {
                       })
                     }
                     className="w-full h-16 text-xs rounded-md border border-input bg-background px-3 py-2 resize-none focus:outline-none focus:ring-1 focus:ring-ring"
-                    placeholder="Notes about this obstacle..."
+                    placeholder={t("Notes about this obstacle...")}
                   />
                 </div>
                 <div className="text-[10px] text-muted-foreground">
