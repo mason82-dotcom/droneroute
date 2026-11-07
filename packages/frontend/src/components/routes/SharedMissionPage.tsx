@@ -30,6 +30,7 @@ import type {
   Obstacle,
 } from "@droneroute/shared";
 import { t } from "@/lib/i18n";
+import { themedStreetStyle } from "@/lib/theme";
 
 interface SharedMissionData {
   id: string;
@@ -218,7 +219,7 @@ function SharedMissionMap({
             : {}),
         }}
         style={{ width: "100%", height: "100%" }}
-        mapStyle={streetStyle}
+        mapStyle={themedStreetStyle(streetStyle)}
         doubleClickZoom={false}
         attributionControl={{ compact: true }}
       >

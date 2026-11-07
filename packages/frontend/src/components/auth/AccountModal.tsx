@@ -42,6 +42,7 @@ import type {
   UnitSystem,
 } from "@droneroute/shared";
 import { t, language, setLanguage, type Language } from "@/lib/i18n";
+import { theme, setTheme, type Theme } from "@/lib/theme";
 
 interface AccountModalProps {
   onClose: () => void;
@@ -341,6 +342,22 @@ export function AccountModal({ onClose }: AccountModalProps) {
                 </Select>
               </div>
 
+              <div>
+                <Label className="text-xs">{t("Theme")}</Label>
+                <Select
+                  value={theme}
+                  onValueChange={(v) => setTheme(v as Theme)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="light">{t("Light")}</SelectItem>
+                    <SelectItem value="dark">{t("Dark")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Extra layers */}
               <div>
                 <Label className="text-xs font-medium text-muted-foreground mb-2 block">
@@ -463,7 +480,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <Label className="text-xs">
-                    Flight speed ({speedLabel(unitSystem)})
+                    {t("Flight speed")} ({speedLabel(unitSystem)})
                   </Label>
                   <Input
                     type="number"
@@ -487,7 +504,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
                 </div>
                 <div>
                   <Label className="text-xs">
-                    Takeoff height ({heightLabel(unitSystem)})
+                    {t("Takeoff height")} ({heightLabel(unitSystem)})
                   </Label>
                   <Input
                     type="number"
@@ -648,7 +665,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
 
               <div>
                 <Label className="text-xs">
-                  Transit speed ({speedLabel(unitSystem)})
+                  {t("Transit speed")} ({speedLabel(unitSystem)})
                 </Label>
                 <Input
                   type="number"

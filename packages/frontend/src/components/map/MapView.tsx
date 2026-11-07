@@ -1,3 +1,4 @@
+import { themedStreetStyle } from "@/lib/theme";
 import { useCallback, useEffect, useRef, useMemo, useState } from "react";
 import Map, {
   Source,
@@ -461,7 +462,7 @@ export function MapView() {
 
   const mapStyle: string | StyleSpecification | null =
     baseMap === "street"
-      ? mapSources.streetStyle
+      ? themedStreetStyle(mapSources.streetStyle)
       : baseMap === "extra" && mapSources.extraStyle
         ? mapSources.extraStyle.url
         : satelliteStyle;

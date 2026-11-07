@@ -170,7 +170,7 @@ export function TemplateConfigPanel({
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <Label className="text-[10px]">
-              Radius ({distanceLabel(unitSystem)})
+              {t("Radius")} ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayDistance(orbitParams.radiusM, unitSystem)}
@@ -188,7 +188,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Altitude ({heightLabel(unitSystem)})
+              {t("Altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(orbitParams.altitude, unitSystem)}
@@ -248,7 +248,7 @@ export function TemplateConfigPanel({
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <Label className="text-[10px]">
-              Altitude ({heightLabel(unitSystem)})
+              {t("Altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(gridParams.altitude, unitSystem)}
@@ -266,7 +266,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Line spacing ({distanceLabel(unitSystem)})
+              {t("Line spacing")} ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayDistance(
@@ -432,7 +432,7 @@ export function TemplateConfigPanel({
         <div className="grid grid-cols-2 gap-2 mb-3">
           <div>
             <Label className="text-[10px]">
-              Distance from wall ({distanceLabel(unitSystem)})
+              {t("Distance from wall")} ({distanceLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayDistance(facadeParams.distanceM, unitSystem)}
@@ -450,7 +450,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Min altitude ({heightLabel(unitSystem)})
+              {t("Min altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(facadeParams.minAltitude, unitSystem)}
@@ -470,7 +470,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Max altitude ({heightLabel(unitSystem)})
+              {t("Max altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(facadeParams.maxAltitude, unitSystem)}
@@ -553,7 +553,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Altitude ({heightLabel(unitSystem)})
+              {t("Altitude")} ({heightLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplayHeight(pencilParams.altitude, unitSystem)}
@@ -571,7 +571,7 @@ export function TemplateConfigPanel({
           </div>
           <div>
             <Label className="text-[10px]">
-              Speed ({speedLabel(unitSystem)})
+              {t("Speed")} ({speedLabel(unitSystem)})
             </Label>
             <NumericInput
               value={toDisplaySpeed(pencilParams.speed, unitSystem)}

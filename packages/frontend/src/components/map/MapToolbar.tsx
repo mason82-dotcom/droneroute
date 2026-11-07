@@ -109,7 +109,7 @@ export function MapToolbar() {
           <MousePointerClick className="h-4 w-4" />
           <span className="text-xs">{t("Add WP")}</span>
         </span>
-        <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
+        <kbd className="text-[10px] font-mono font-bold border border-border bg-secondary px-1.5 py-0.5 rounded text-foreground/80">
           W
         </kbd>
       </Button>
@@ -124,7 +124,7 @@ export function MapToolbar() {
           <Crosshair className="h-4 w-4" />
           <span className="text-xs">{t("Add POI")}</span>
         </span>
-        <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
+        <kbd className="text-[10px] font-mono font-bold border border-border bg-secondary px-1.5 py-0.5 rounded text-foreground/80">
           P
         </kbd>
       </Button>
@@ -139,7 +139,7 @@ export function MapToolbar() {
           <Triangle className="h-4 w-4" />
           <span className="text-xs">{t("Obstacle")}</span>
         </span>
-        <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
+        <kbd className="text-[10px] font-mono font-bold border border-border bg-secondary px-1.5 py-0.5 rounded text-foreground/80">
           B
         </kbd>
       </Button>
@@ -196,7 +196,7 @@ export function MapToolbar() {
                       {opt.description}
                     </div>
                   </div>
-                  <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80 shrink-0">
+                  <kbd className="text-[10px] font-mono font-bold border border-border bg-secondary px-1.5 py-0.5 rounded text-foreground/80 shrink-0">
                     {opt.key}
                   </kbd>
                 </button>
@@ -222,7 +222,7 @@ export function MapToolbar() {
           <Hand className="h-4 w-4" />
           <span className="text-xs">{t("Pan")}</span>
         </span>
-        <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
+        <kbd className="text-[10px] font-mono font-bold border border-border bg-secondary px-1.5 py-0.5 rounded text-foreground/80">
           {t("Esc")}
         </kbd>
       </Button>

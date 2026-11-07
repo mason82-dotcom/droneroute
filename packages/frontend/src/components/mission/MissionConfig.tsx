@@ -144,7 +144,7 @@ export function MissionConfig() {
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">
-            Flight speed ({speedLabel(unitSystem)})
+            {t("Flight speed")} ({speedLabel(unitSystem)})
           </Label>
           <Input
             type="number"
@@ -165,7 +165,7 @@ export function MissionConfig() {
         </div>
         <div>
           <Label className="text-xs">
-            Takeoff height ({heightLabel(unitSystem)})
+            {t("Takeoff height")} ({heightLabel(unitSystem)})
           </Label>
           <Input
             type="number"
@@ -311,7 +311,7 @@ export function MissionConfig() {
 
       <div>
         <Label className="text-xs">
-          Transit speed ({speedLabel(unitSystem)})
+          {t("Transit speed")} ({speedLabel(unitSystem)})
         </Label>
         <Input
           type="number"

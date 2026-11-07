@@ -226,7 +226,7 @@ export function BulkActionToolbar() {
               <div>
                 <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <ArrowUp className="h-2.5 w-2.5" />
-                  Altitude ({heightLabel(unitSystem)})
+                  {t("Altitude")} ({heightLabel(unitSystem)})
                 </Label>
                 <Input
                   type="number"
@@ -267,7 +267,7 @@ export function BulkActionToolbar() {
               <div>
                 <Label className="text-[10px] text-muted-foreground flex items-center gap-1">
                   <Gauge className="h-2.5 w-2.5" />
-                  Speed ({speedLabel(unitSystem)})
+                  {t("Speed")} ({speedLabel(unitSystem)})
                 </Label>
                 <Input
                   type="number"
@@ -369,7 +369,7 @@ export function BulkActionToolbar() {
                       </SelectItem>
                     )}
                     <SelectItem value="global">
-                      Use global ({config.globalHeadingMode})
+                      {t("Use global")} ({config.globalHeadingMode})
                     </SelectItem>
                     <SelectItem value="followWayline">
                       {t("Follow wayline")}

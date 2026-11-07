@@ -77,7 +77,7 @@ export function WaypointEditorInline({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <Label className="text-xs">
-            Altitude ({heightLabel(unitSystem)})
+            {t("Altitude")} ({heightLabel(unitSystem)})
           </Label>
           <Input
             type="number"
@@ -215,7 +215,7 @@ export function WaypointEditorInline({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="global">
-              Use global ({config.globalHeadingMode})
+              {t("Use global")} ({config.globalHeadingMode})
             </SelectItem>
             <SelectItem value="followWayline">{t("Follow wayline")}</SelectItem>
             <SelectItem value="manually">{t("Manual")}</SelectItem>
