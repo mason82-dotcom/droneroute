@@ -14,6 +14,7 @@ import type { SelectionMode } from "@/store/missionStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
 import { formatHeight, formatSpeed } from "@/lib/units";
 import { WaypointEditorInline } from "./WaypointEditor";
+import { t } from "@/lib/i18n";
 
 export function WaypointList() {
   const {
@@ -46,8 +47,8 @@ export function WaypointList() {
     return (
       <div className="flex flex-col items-center justify-center p-6 text-center text-muted-foreground">
         <MapPin className="h-8 w-8 mb-2 opacity-50" />
-        <p className="text-sm">No waypoints yet</p>
-        <p className="text-xs mt-1">Click on the map to add waypoints</p>
+        <p className="text-sm">{t("No waypoints yet")}</p>
+        <p className="text-xs mt-1">{t("Click on the map to add waypoints")}</p>
       </div>
     );
   }
@@ -146,7 +147,7 @@ export function WaypointList() {
               onDrop={(e) => handleDrop(e, i)}
               onDragEnd={handleDragEnd}
             >
-              <span title="Drag to reorder">
+              <span title={t("Drag to reorder")}>
                 <GripVertical className="h-3 w-3 text-muted-foreground shrink-0 cursor-grab active:cursor-grabbing" />
               </span>
               <Badge
@@ -174,7 +175,7 @@ export function WaypointList() {
                   <div
                     className="text-xs font-medium truncate cursor-text hover:text-primary transition-colors"
                     onDoubleClick={(e) => startRename(wp.index, e)}
-                    title="Double-click to rename"
+                    title={t("Double-click to rename")}
                   >
                     {wp.name || `Waypoint ${wp.index + 1}`}
                   </div>
@@ -204,7 +205,7 @@ export function WaypointList() {
                     : "text-muted-foreground hover:text-foreground"
                 }`}
                 onClick={(e) => toggleEditor(wp.index, e)}
-                title="Edit waypoint settings"
+                title={t("Edit waypoint settings")}
               >
                 <Settings className="h-3 w-3" />
               </Button>
@@ -216,7 +217,7 @@ export function WaypointList() {
                   e.stopPropagation();
                   removeWaypoint(wp.index);
                 }}
-                title="Remove waypoint"
+                title={t("Remove waypoint")}
               >
                 <X className="h-3 w-3" />
               </Button>

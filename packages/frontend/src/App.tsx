@@ -52,6 +52,7 @@ import { useAirspaceStore } from "@/store/airspaceStore";
 import { api } from "@/lib/api";
 import type { Mission } from "@droneroute/shared";
 import { getObstacleWarnings, getAirspaceWarnings } from "@/lib/geo";
+import { t } from "@/lib/i18n";
 
 type SidebarSection = "waypoints" | "pois" | "obstacles" | "config" | "check";
 
@@ -283,13 +284,18 @@ export default function App() {
 
   const handleExport = async () => {
     if (waypoints.length < 2) {
-      toast.warning("Need at least 2 waypoints to export");
+      toast.warning(t("Need at least 2 waypoints to export"));
       return;
     }
 
     if (wpmlErrors) {
       setExpandedSections((prev) => ({ ...prev, check: true }));
-      toast.error(`Export blocked: ${wpmlErrors} ${wpmlErrors === 1 ? "field violates" : "fields violate"} the DJI WPML reference – see DJI check`);
+      toast.error(
+        t(
+          "Export blocked: {n} field(s) violate the DJI WPML reference – see DJI check",
+          { n: wpmlErrors },
+        ),
+      );
       return;
     }
 
@@ -309,7 +315,7 @@ export default function App() {
       a.click();
       URL.revokeObjectURL(url);
     } catch (err: any) {
-      toast.error(`Export failed: ${err.message}`);
+      toast.error(t("Export failed: {msg}", { msg: err.message }));
     } finally {
       setExporting(false);
     }
@@ -321,7 +327,7 @@ export default function App() {
       return;
     }
     if (!missionName.trim()) {
-      toast.warning("Please enter a mission name before saving");
+      toast.warning(t("Please enter a mission name before saving"));
       return;
     }
     setSaving(true);
@@ -346,7 +352,7 @@ export default function App() {
       }
       setDirty(false);
     } catch (err: any) {
-      toast.error(`Save failed: ${err.message}`);
+      toast.error(t("Save failed: {msg}", { msg: err.message }));
     } finally {
       setSaving(false);
     }
@@ -372,7 +378,7 @@ export default function App() {
         pois: result.pois,
       });
     } catch (err: any) {
-      toast.error(`Import failed: ${err.message}`);
+      toast.error(t("Import failed: {msg}", { msg: err.message }));
     }
 
     // Reset file input
@@ -513,7 +519,7 @@ export default function App() {
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <img src="/droneroute.png" alt="DroneRoute" className="h-5 w-5" />
-              <span className="font-bold text-sm">DroneRoute</span>
+              <span className="font-bold text-sm">{t("DroneRoute")}</span>
             </div>
             <div className="flex items-center gap-1">
               <Button
@@ -521,7 +527,7 @@ export default function App() {
                 size="icon"
                 onClick={() => setShowAbout(true)}
                 className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                title="Help & shortcuts"
+                title={t("Help & shortcuts")}
               >
                 <CircleHelp className="h-4 w-4" />
               </Button>
@@ -530,7 +536,7 @@ export default function App() {
                 size="icon"
                 onClick={() => setCurrentPage("routes")}
                 className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                title="My routes"
+                title={t("My routes")}
               >
                 <FolderOpen className="h-4 w-4" />
               </Button>
@@ -543,7 +549,7 @@ export default function App() {
                     setCurrentPage("admin");
                   }}
                   className="h-7 w-7 text-purple-400 hover:text-purple-300"
-                  title="User management"
+                  title={t("User management")}
                 >
                   <Shield className="h-4 w-4" />
                 </Button>
@@ -554,8 +560,8 @@ export default function App() {
             value={missionName}
             onChange={(e) => setMissionName(e.target.value)}
             className="h-8 text-xs font-medium border-blue-500/30 bg-blue-500/5 focus-visible:ring-blue-500/40"
-            placeholder="Mission name"
-            title="Name your mission for easy identification"
+            placeholder={t("Mission name")}
+            title={t("Name your mission for easy identification")}
           />
         </div>
 
@@ -567,10 +573,10 @@ export default function App() {
             onClick={handleSave}
             disabled={saving}
             className="flex-1 text-xs h-7 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/15 hover:text-blue-300"
-            title="Save mission to your account"
+            title={t("Save mission to your account")}
           >
             <Save className="h-3 w-3" />
-            {saving ? "..." : "Save"}
+            {saving ? "..." : t("Save")}
           </Button>
           <Button
             variant="outline"
@@ -585,17 +591,17 @@ export default function App() {
             }
           >
             <Download className="h-3 w-3" />
-            {exporting ? "..." : "Export KMZ"}
+            {exporting ? "..." : t("Export KMZ")}
           </Button>
           <Button
             variant="outline"
             size="sm"
             onClick={() => fileInputRef.current?.click()}
             className="flex-1 text-xs h-7 border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/15 hover:text-blue-300"
-            title="Import a DJI KMZ file"
+            title={t("Import a DJI KMZ file")}
           >
             <Upload className="h-3 w-3" />
-            Import KMZ
+            {t("Import KMZ")}
           </Button>
           <input
             ref={fileInputRef}
@@ -613,7 +619,7 @@ export default function App() {
             <button
               className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider bg-blue-500/10 hover:bg-blue-500/15 text-blue-400"
               onClick={() => toggleSection("waypoints")}
-              title="Flight path coordinates — click on the map to add"
+              title={t("Flight path coordinates — click on the map to add")}
             >
               {expandedSections.waypoints ? (
                 <ChevronDown className="h-3 w-3" />
@@ -621,7 +627,7 @@ export default function App() {
                 <ChevronRight className="h-3 w-3" />
               )}
               <MapPin className="h-3 w-3" />
-              Waypoints ({waypoints.length})
+              {t("Waypoints")} ({waypoints.length})
             </button>
             {expandedSections.waypoints && (
               <div className="max-h-[40vh] overflow-y-auto section-expand">
@@ -635,7 +641,7 @@ export default function App() {
             <button
               className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider bg-amber-500/10 hover:bg-amber-500/15 text-amber-400"
               onClick={() => toggleSection("pois")}
-              title="Targets the drone can point its camera at"
+              title={t("Targets the drone can point its camera at")}
             >
               {expandedSections.pois ? (
                 <ChevronDown className="h-3 w-3" />
@@ -643,7 +649,7 @@ export default function App() {
                 <ChevronRight className="h-3 w-3" />
               )}
               <Crosshair className="h-3 w-3" />
-              Points of interest ({pois.length})
+              {t("Points of interest")} ({pois.length})
             </button>
             {expandedSections.pois && (
               <div className="max-h-[30vh] overflow-y-auto section-expand">
@@ -657,7 +663,7 @@ export default function App() {
             <button
               className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider bg-red-500/10 hover:bg-red-500/15 text-red-400"
               onClick={() => toggleSection("obstacles")}
-              title="No-fly zones to avoid during the mission"
+              title={t("No-fly zones to avoid during the mission")}
             >
               {expandedSections.obstacles ? (
                 <ChevronDown className="h-3 w-3" />
@@ -665,7 +671,7 @@ export default function App() {
                 <ChevronRight className="h-3 w-3" />
               )}
               <Triangle className="h-3 w-3" />
-              Obstacles ({obstacles.length})
+              {t("Obstacles")} ({obstacles.length})
             </button>
             {expandedSections.obstacles && (
               <div className="max-h-[30vh] overflow-y-auto section-expand">
@@ -679,7 +685,7 @@ export default function App() {
             <button
               className="flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider bg-purple-500/10 hover:bg-purple-500/15 text-purple-400"
               onClick={() => toggleSection("config")}
-              title="Drone model, speed, altitude and flight behavior"
+              title={t("Drone model, speed, altitude and flight behavior")}
             >
               {expandedSections.config ? (
                 <ChevronDown className="h-3 w-3" />
@@ -687,7 +693,7 @@ export default function App() {
                 <ChevronRight className="h-3 w-3" />
               )}
               <Settings className="h-3 w-3" />
-              Mission settings
+              {t("Mission settings")}
             </button>
             {expandedSections.config && (
               <div className="max-h-[40vh] overflow-y-auto section-expand">
@@ -704,7 +710,9 @@ export default function App() {
               className={`flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider ${wpmlErrors ? "bg-red-500/10 hover:bg-red-500/15 text-red-400" : wpmlWarnings ? "bg-amber-500/10 hover:bg-amber-500/15 text-amber-400" : "bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400"}`}
               onClick={() => toggleSection("check")}
               aria-expanded={expandedSections.check}
-              title="Checks all fields against the DJI WPML reference before export"
+              title={t(
+                "Checks all fields against the DJI WPML reference before export",
+              )}
             >
               {expandedSections.check ? (
                 <ChevronDown className="h-3 w-3" />
@@ -712,8 +720,10 @@ export default function App() {
                 <ChevronRight className="h-3 w-3" />
               )}
               <ShieldCheck className="h-3 w-3" />
-              DJI check
-              {wpmlErrors || wpmlWarnings ? ` (${[wpmlErrors ? `${wpmlErrors} ${wpmlErrors === 1 ? "error" : "errors"}` : "", wpmlWarnings ? `${wpmlWarnings} ${wpmlWarnings === 1 ? "warning" : "warnings"}` : ""].filter(Boolean).join(", ")})` : ""}
+              {t("DJI check")}
+              {wpmlErrors || wpmlWarnings
+                ? ` (${[wpmlErrors ? t(wpmlErrors === 1 ? "{n} error" : "{n} errors", { n: wpmlErrors }) : "", wpmlWarnings ? t(wpmlWarnings === 1 ? "{n} warning" : "{n} warnings", { n: wpmlWarnings }) : ""].filter(Boolean).join(", ")})`
+                : ""}
             </button>
             {expandedSections.check && (
               <div className="max-h-[30vh] overflow-y-auto section-expand">
@@ -748,7 +758,7 @@ export default function App() {
                   {photoCount > 0 && (
                     <span
                       className="flex items-center gap-1 text-[11px]"
-                      title="Photo actions"
+                      title={t("Photo actions")}
                     >
                       <Camera className="h-3 w-3 text-sky-400" />
                       <span className="text-sky-300 font-medium">
@@ -759,7 +769,7 @@ export default function App() {
                   {videoCount > 0 && (
                     <span
                       className="flex items-center gap-1 text-[11px]"
-                      title="Video actions"
+                      title={t("Video actions")}
                     >
                       <Video className="h-3 w-3 text-red-400" />
                       <span className="text-red-300 font-medium">
@@ -786,7 +796,7 @@ export default function App() {
                       {elevGain > 0 && (
                         <span
                           className="flex items-center gap-1 text-[11px]"
-                          title="Elevation gain"
+                          title={t("Elevation gain")}
                         >
                           <TrendingUp className="h-3 w-3 text-orange-400" />
                           <span className="text-orange-300 font-medium">
@@ -796,7 +806,7 @@ export default function App() {
                       )}
                       <span
                         className="flex items-center gap-1 text-[11px]"
-                        title="Total distance"
+                        title={t("Total distance")}
                       >
                         <Route className="h-3 w-3 text-emerald-400" />
                         <span className="text-emerald-300 font-medium">
@@ -856,7 +866,7 @@ export default function App() {
                   size="icon"
                   onClick={() => setShowAccountMenu(true)}
                   className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                  title="Account settings"
+                  title={t("Account settings")}
                 >
                   <UserCog className="h-3.5 w-3.5" />
                 </Button>
@@ -865,7 +875,7 @@ export default function App() {
                   size="icon"
                   onClick={logout}
                   className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                  title="Sign out"
+                  title={t("Sign out")}
                 >
                   <LogOut className="h-3.5 w-3.5" />
                 </Button>
@@ -881,7 +891,7 @@ export default function App() {
               <div className="h-6 w-6 rounded-full bg-muted flex items-center justify-center shrink-0">
                 <User className="h-3 w-3 text-muted-foreground" />
               </div>
-              Guest mode. Sign in to save missions
+              {t("Guest mode. Sign in to save missions")}
             </Button>
           )}
         </div>

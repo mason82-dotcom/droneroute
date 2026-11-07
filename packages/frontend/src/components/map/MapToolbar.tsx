@@ -14,6 +14,7 @@ import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useMissionStore } from "@/store/missionStore";
 import type { TemplateType } from "@/lib/templates";
+import { t } from "@/lib/i18n";
 
 const activeClass =
   "bg-primary text-primary-foreground ring-2 ring-primary/50 shadow-lg shadow-primary/20 hover:bg-primary/90";
@@ -29,34 +30,34 @@ const TEMPLATE_OPTIONS: {
 }[] = [
   {
     type: "orbit",
-    label: "Orbit",
-    shortLabel: "Orbit",
+    label: t("Orbit"),
+    shortLabel: t("Orbit"),
     icon: Orbit,
-    description: "Circle around a point",
+    description: t("Circle around a point"),
     key: "O",
   },
   {
     type: "grid",
-    label: "Grid survey",
-    shortLabel: "Grid",
+    label: t("Grid survey"),
+    shortLabel: t("Grid"),
     icon: Grid3X3,
-    description: "Lawn-mower scan area",
+    description: t("Lawn-mower scan area"),
     key: "G",
   },
   {
     type: "facade",
-    label: "Facade scan",
-    shortLabel: "Facade",
+    label: t("Facade scan"),
+    shortLabel: t("Facade"),
     icon: Building2,
-    description: "Vertical wall scan",
+    description: t("Vertical wall scan"),
     key: "F",
   },
   {
     type: "pencil",
-    label: "Pencil path",
-    shortLabel: "Pencil",
+    label: t("Pencil path"),
+    shortLabel: t("Pencil"),
     icon: PenLine,
-    description: "Draw a freehand path",
+    description: t("Draw a freehand path"),
     key: "Z",
   },
 ];
@@ -101,12 +102,12 @@ export function MapToolbar() {
         variant={isAddingWaypoint ? "default" : "outline"}
         size="sm"
         onClick={() => setIsAddingWaypoint(true)}
-        title="Click on map to add waypoints (W)"
+        title={t("Click on map to add waypoints (W)")}
         className={`justify-between ${isAddingWaypoint ? activeClass : inactiveClass}`}
       >
         <span className="flex items-center gap-1.5">
           <MousePointerClick className="h-4 w-4" />
-          <span className="text-xs">Add WP</span>
+          <span className="text-xs">{t("Add WP")}</span>
         </span>
         <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
           W
@@ -116,12 +117,12 @@ export function MapToolbar() {
         variant={isAddingPoi ? "default" : "outline"}
         size="sm"
         onClick={() => setIsAddingPoi(true)}
-        title="Click on map to add POI (P)"
+        title={t("Click on map to add POI (P)")}
         className={`justify-between ${isAddingPoi ? activeClass : inactiveClass}`}
       >
         <span className="flex items-center gap-1.5">
           <Crosshair className="h-4 w-4" />
-          <span className="text-xs">Add POI</span>
+          <span className="text-xs">{t("Add POI")}</span>
         </span>
         <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
           P
@@ -131,12 +132,12 @@ export function MapToolbar() {
         variant={isDrawingObstacle ? "default" : "outline"}
         size="sm"
         onClick={() => setIsDrawingObstacle(!isDrawingObstacle)}
-        title="Draw obstacle polygon (B)"
+        title={t("Draw obstacle polygon (B)")}
         className={`justify-between ${isDrawingObstacle ? activeClass : inactiveClass}`}
       >
         <span className="flex items-center gap-1.5">
           <Triangle className="h-4 w-4" />
-          <span className="text-xs">Obstacle</span>
+          <span className="text-xs">{t("Obstacle")}</span>
         </span>
         <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
           B
@@ -149,7 +150,7 @@ export function MapToolbar() {
           variant={templateMode ? "default" : "outline"}
           size="sm"
           onClick={() => setShowTemplateMenu(!showTemplateMenu)}
-          title="Insert a mission template"
+          title={t("Insert a mission template")}
           className={`justify-between w-full ${templateMode ? activeClass : inactiveClass}`}
         >
           <span className="flex items-center gap-1.5">
@@ -168,7 +169,7 @@ export function MapToolbar() {
               {templateMode
                 ? TEMPLATE_OPTIONS.find((t) => t.type === templateMode)
                     ?.shortLabel
-                : "Template"}
+                : t("Template")}
             </span>
           </span>
           <ChevronDown className="h-3 w-3 ml-1" />
@@ -214,15 +215,15 @@ export function MapToolbar() {
           setIsDrawingObstacle(false);
           setTemplateMode(null);
         }}
-        title="Pan / select mode (Esc)"
+        title={t("Pan / select mode (Esc)")}
         className={`justify-between ${isPanning ? activeClass : inactiveClass}`}
       >
         <span className="flex items-center gap-1.5">
           <Hand className="h-4 w-4" />
-          <span className="text-xs">Pan</span>
+          <span className="text-xs">{t("Pan")}</span>
         </span>
         <kbd className="text-[10px] font-mono font-bold border border-white/20 bg-white/10 px-1.5 py-0.5 rounded text-foreground/80">
-          Esc
+          {t("Esc")}
         </kbd>
       </Button>
       {(waypoints.length > 0 || pois.length > 0 || obstacles.length > 0) && (
@@ -233,11 +234,11 @@ export function MapToolbar() {
             if (confirm("Clear all waypoints, POIs, and obstacles?"))
               clearMission();
           }}
-          title="Clear all waypoints, POIs, and obstacles"
+          title={t("Clear all waypoints, POIs, and obstacles")}
           className="bg-background/90 backdrop-blur-sm text-destructive hover:text-destructive"
         >
           <Trash2 className="h-4 w-4" />
-          <span className="text-xs">Clear</span>
+          <span className="text-xs">{t("Clear")}</span>
         </Button>
       )}
     </div>

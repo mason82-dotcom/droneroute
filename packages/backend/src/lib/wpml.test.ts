@@ -180,18 +180,35 @@ describe("area templates from DJI Pilot 2", () => {
 });
 
 describe("camera lenses for thermal payloads (Pilot 2 pattern)", () => {
-  const photo = { actionId: 0, actionType: "takePhoto", params: { payloadPositionIndex: 0 } } as any;
-  const rec = { actionId: 1, actionType: "startRecord", params: { payloadPositionIndex: 0 } } as any;
+  const photo = {
+    actionId: 0,
+    actionType: "takePhoto",
+    params: { payloadPositionIndex: 0 },
+  } as any;
+  const rec = {
+    actionId: 1,
+    actionType: "startRecord",
+    params: { payloadPositionIndex: 0 },
+  } as any;
   const m = mission([wp(0, { actions: [photo] }), wp(1, { actions: [rec] })]);
-  m.config = { ...m.config, droneEnumValue: 99, droneSubEnumValue: 1, payloadEnumValue: 89, imageFormat: "visable,ir" };
+  m.config = {
+    ...m.config,
+    droneEnumValue: 99,
+    droneSubEnumValue: 1,
+    payloadEnumValue: 89,
+    imageFormat: "visable,ir",
+  };
 
   it("writes payloadParam/imageFormat and an explicit lens per photo/video action", () => {
     const template = buildTemplateKml(m);
     expect(values(template, "imageFormat")).toEqual(["visable,ir"]);
     const waylines = buildWaylinesWpml(m);
-    expect(values(waylines, "payloadLensIndex")).toEqual(["visable,ir", "visable,ir"]);
+    expect(values(waylines, "payloadLensIndex")).toEqual([
+      "visable,ir",
+      "visable,ir",
+    ]);
     expect(values(waylines, "useGlobalPayloadLensIndex")).toEqual(["0", "0"]);
-    expect(values(waylines, "imageFormat")).toEqual([]);            // Pilot 2 keeps it in the template only
+    expect(values(waylines, "imageFormat")).toEqual([]); // Pilot 2 keeps it in the template only
   });
 
   it("writes nothing without a lens selection or with an unknown value", () => {
@@ -212,33 +229,77 @@ describe("DJI WPML validation", async () => {
   const { validateMission } = await import("@droneroute/shared");
   const base = () => {
     const m = mission([wp(0), wp(1)]);
-    m.config = { ...m.config, droneEnumValue: 77, droneSubEnumValue: 0, payloadEnumValue: 66, heightMode: "relativeToStartPoint" };
+    m.config = {
+      ...m.config,
+      droneEnumValue: 77,
+      droneSubEnumValue: 0,
+      payloadEnumValue: 66,
+      heightMode: "relativeToStartPoint",
+    };
     return m;
   };
 
   it("accepts a valid route", () => {
-    expect(validateMission(base()).filter((i) => i.level === "error")).toEqual([]);
+    expect(validateMission(base()).filter((i) => i.level === "error")).toEqual(
+      [],
+    );
   });
 
   it("flags values outside the DJI ranges and enums", () => {
     const m = base();
-    m.config = { ...m.config, takeOffSecurityHeight: 1, globalTransitionalSpeed: 16, finishAction: "fly" as any, imageFormat: "visable,ir" };
-    m.waypoints[0] = { ...m.waypoints[0], useGlobalHeadingParam: false, headingAngle: 190, actions: [{ actionId: 0, actionType: "hover", params: { hoverTime: 0 } } as any] };
-    const fields = validateMission(m).filter((i) => i.level === "error").map((i) => i.field);
-    expect(fields).toEqual(expect.arrayContaining(["takeOffSecurityHeight", "globalTransitionalSpeed", "finishAction",
-      "payloadParam.imageFormat", "waypoint[1].waypointHeadingAngle", "waypoint[1].action[1].hoverTime"]));
+    m.config = {
+      ...m.config,
+      takeOffSecurityHeight: 1,
+      globalTransitionalSpeed: 16,
+      finishAction: "fly" as any,
+      imageFormat: "visable,ir",
+    };
+    m.waypoints[0] = {
+      ...m.waypoints[0],
+      useGlobalHeadingParam: false,
+      headingAngle: 190,
+      actions: [
+        { actionId: 0, actionType: "hover", params: { hoverTime: 0 } } as any,
+      ],
+    };
+    const fields = validateMission(m)
+      .filter((i) => i.level === "error")
+      .map((i) => i.field);
+    expect(fields).toEqual(
+      expect.arrayContaining([
+        "takeOffSecurityHeight",
+        "globalTransitionalSpeed",
+        "finishAction",
+        "payloadParam.imageFormat",
+        "waypoint[1].waypointHeadingAngle",
+        "waypoint[1].action[1].hoverTime",
+      ]),
+    );
   });
 
   it("warns that aboveGroundLevel is FlightHub 2 only and checks turn damping against the segment", () => {
     const m = base();
     m.config.heightMode = "aboveGroundLevel";
-    m.waypoints[0] = { ...m.waypoints[0], useGlobalTurnParam: false, turnMode: "coordinateTurn", turnDampingDist: 500 };
+    m.waypoints[0] = {
+      ...m.waypoints[0],
+      useGlobalTurnParam: false,
+      turnMode: "coordinateTurn",
+      turnDampingDist: 500,
+    };
     const issues = validateMission(m);
     expect(issues.find((i) => i.field === "heightMode")?.level).toBe("warning");
-    expect(issues.some((i) => i.field === "waypoint[1].waypointTurnDampingDist" && i.level === "error")).toBe(true);
+    expect(
+      issues.some(
+        (i) =>
+          i.field === "waypoint[1].waypointTurnDampingDist" &&
+          i.level === "error",
+      ),
+    ).toBe(true);
   });
 
   it("writes executeHeightMode for relative heights in waylines.wpml", () => {
-    expect(values(buildWaylinesWpml(base()), "executeHeightMode")).toEqual(["relativeToStartPoint"]);
+    expect(values(buildWaylinesWpml(base()), "executeHeightMode")).toEqual([
+      "relativeToStartPoint",
+    ]);
   });
 });

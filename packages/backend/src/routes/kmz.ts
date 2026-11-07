@@ -53,9 +53,16 @@ kmzRoutes.post(
       };
 
       // Never export a KMZ that violates the DJI WPML reference (warnings are only shown in the editor).
-      const wpmlErrors = validateMission(mission).filter((i) => i.level === "error");
+      const wpmlErrors = validateMission(mission).filter(
+        (i) => i.level === "error",
+      );
       if (wpmlErrors.length) {
-        res.status(422).json({ error: "Mission violates the DJI WPML specification", issues: wpmlErrors });
+        res
+          .status(422)
+          .json({
+            error: "Mission violates the DJI WPML specification",
+            issues: wpmlErrors,
+          });
         return;
       }
       const buffer = await generateKmzBuffer(mission);
@@ -102,9 +109,16 @@ kmzRoutes.get(
       };
 
       // Never export a KMZ that violates the DJI WPML reference (warnings are only shown in the editor).
-      const wpmlErrors = validateMission(mission).filter((i) => i.level === "error");
+      const wpmlErrors = validateMission(mission).filter(
+        (i) => i.level === "error",
+      );
       if (wpmlErrors.length) {
-        res.status(422).json({ error: "Mission violates the DJI WPML specification", issues: wpmlErrors });
+        res
+          .status(422)
+          .json({
+            error: "Mission violates the DJI WPML specification",
+            issues: wpmlErrors,
+          });
         return;
       }
       const buffer = await generateKmzBuffer(mission);

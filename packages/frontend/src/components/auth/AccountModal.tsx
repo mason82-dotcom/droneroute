@@ -41,6 +41,7 @@ import type {
   VisualizationPreferences,
   UnitSystem,
 } from "@droneroute/shared";
+import { t, language, setLanguage, type Language } from "@/lib/i18n";
 
 interface AccountModalProps {
   onClose: () => void;
@@ -153,7 +154,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-border shrink-0">
-          <h2 className="text-sm font-semibold">Settings</h2>
+          <h2 className="text-sm font-semibold">{t("Settings")}</h2>
           <button
             onClick={onClose}
             className="text-muted-foreground hover:text-foreground transition-colors"
@@ -166,13 +167,13 @@ export function AccountModal({ onClose }: AccountModalProps) {
           <div className="px-5 pt-4 shrink-0">
             <TabsList className="w-full">
               <TabsTrigger value="account" className="flex-1">
-                Account
+                {t("Account")}
               </TabsTrigger>
               <TabsTrigger value="visualization" className="flex-1">
-                Visualization
+                {t("Visualization")}
               </TabsTrigger>
               <TabsTrigger value="mission-defaults" className="flex-1">
-                Mission defaults
+                {t("Mission defaults")}
               </TabsTrigger>
             </TabsList>
           </div>
@@ -184,7 +185,9 @@ export function AccountModal({ onClose }: AccountModalProps) {
           >
             <div className="space-y-5 pt-2">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Email</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("Email")}
+                </Label>
                 <p className="text-sm">{email}</p>
               </div>
 
@@ -192,11 +195,11 @@ export function AccountModal({ onClose }: AccountModalProps) {
                 <form onSubmit={handleChangePassword} className="space-y-3">
                   <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                     <KeyRound className="h-3 w-3" />
-                    Change password
+                    {t("Change password")}
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="currentPassword" className="text-xs">
-                      Current password
+                      {t("Current password")}
                     </Label>
                     <Input
                       id="currentPassword"
@@ -209,14 +212,14 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="newPassword" className="text-xs">
-                      New password
+                      {t("New password")}
                     </Label>
                     <Input
                       id="newPassword"
                       type="password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      placeholder="Min 6 characters"
+                      placeholder={t("Min 6 characters")}
                       className="h-9 text-sm"
                       required
                       minLength={6}
@@ -224,7 +227,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   </div>
                   <div className="space-y-1.5">
                     <Label htmlFor="confirmPassword" className="text-xs">
-                      Confirm new password
+                      {t("Confirm new password")}
                     </Label>
                     <Input
                       id="confirmPassword"
@@ -239,7 +242,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   {error && <p className="text-xs text-destructive">{error}</p>}
                   {success && (
                     <p className="text-xs text-emerald-400">
-                      Password updated successfully
+                      {t("Password updated successfully")}
                     </p>
                   )}
                   <Button
@@ -261,7 +264,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
           >
             <div className="space-y-4 pt-2">
               <div>
-                <Label className="text-xs">View mode</Label>
+                <Label className="text-xs">{t("View mode")}</Label>
                 <Select
                   value={vizPrefs.viewMode}
                   onValueChange={(v) =>
@@ -282,7 +285,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
               </div>
 
               <div>
-                <Label className="text-xs">Map style</Label>
+                <Label className="text-xs">{t("Map style")}</Label>
                 <Select
                   value={vizPrefs.mapStyle}
                   onValueChange={(v) =>
@@ -296,14 +299,14 @@ export function AccountModal({ onClose }: AccountModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="satellite">Satellite</SelectItem>
-                    <SelectItem value="street">Street</SelectItem>
+                    <SelectItem value="satellite">{t("Satellite")}</SelectItem>
+                    <SelectItem value="street">{t("Street")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-xs">Unit system</Label>
+                <Label className="text-xs">{t("Unit system")}</Label>
                 <Select
                   value={unitSystem}
                   onValueChange={(v) => setUnitSystem(v as UnitSystem)}
@@ -312,10 +315,28 @@ export function AccountModal({ onClose }: AccountModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="metric">Metric (m, m/s, km)</SelectItem>
-                    <SelectItem value="imperial">
-                      Imperial (ft, mph, mi)
+                    <SelectItem value="metric">
+                      {t("Metric (m, m/s, km)")}
                     </SelectItem>
+                    <SelectItem value="imperial">
+                      {t("Imperial (ft, mph, mi)")}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="text-xs">{t("Language")}</Label>
+                <Select
+                  value={language}
+                  onValueChange={(v) => setLanguage(v as Language)}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="en">English</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -323,7 +344,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
               {/* Extra layers */}
               <div>
                 <Label className="text-xs font-medium text-muted-foreground mb-2 block">
-                  Extra layers
+                  {t("Extra layers")}
                 </Label>
                 <div className="space-y-2">
                   {AIRSPACE_PROVIDERS.map((provider) => (
@@ -342,7 +363,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
                       <div>
                         <span className="text-sm">{provider.name}</span>
                         <p className="text-[11px] text-muted-foreground mt-0.5">
-                          {provider.description}
+                          {t(provider.description)}
                         </p>
                       </div>
                     </label>
@@ -371,11 +392,13 @@ export function AccountModal({ onClose }: AccountModalProps) {
           >
             <div className="space-y-3 pt-2">
               <p className="text-[10px] text-muted-foreground">
-                These defaults will be applied when creating new missions.
+                {t(
+                  "These defaults will be applied when creating new missions.",
+                )}
               </p>
 
               <div>
-                <Label className="text-xs">Drone model</Label>
+                <Label className="text-xs">{t("Drone model")}</Label>
                 <Select
                   value={`${missionDefaults.droneEnumValue}-${missionDefaults.droneSubEnumValue}`}
                   onValueChange={(v) => {
@@ -413,7 +436,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
 
               {selectedDrone && selectedDrone.payloads.length > 1 && (
                 <div>
-                  <Label className="text-xs">Payload</Label>
+                  <Label className="text-xs">{t("Payload")}</Label>
                   <Select
                     value={String(missionDefaults.payloadEnumValue)}
                     onValueChange={(v) =>
@@ -488,7 +511,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
               </div>
 
               <div>
-                <Label className="text-xs">Max battery (min)</Label>
+                <Label className="text-xs">{t("Max battery (min)")}</Label>
                 <Input
                   type="number"
                   value={missionDefaults.maxBatteryMinutes}
@@ -508,7 +531,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
               </div>
 
               <div>
-                <Label className="text-xs">Height reference</Label>
+                <Label className="text-xs">{t("Height reference")}</Label>
                 <Select
                   value={missionDefaults.heightMode}
                   onValueChange={(v) =>
@@ -520,17 +543,17 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="relativeToStartPoint">
-                      Relative to start
+                      {t("Relative to start")}
                     </SelectItem>
                     <SelectItem value="aboveGroundLevel">
-                      Above ground level
+                      {t("Above ground level")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-xs">Heading mode</Label>
+                <Label className="text-xs">{t("Heading mode")}</Label>
                 <Select
                   value={missionDefaults.globalHeadingMode}
                   onValueChange={(v) =>
@@ -542,20 +565,20 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="followWayline">
-                      Follow wayline
+                      {t("Follow wayline")}
                     </SelectItem>
-                    <SelectItem value="manually">Manual</SelectItem>
-                    <SelectItem value="fixed">Fixed</SelectItem>
+                    <SelectItem value="manually">{t("Manual")}</SelectItem>
+                    <SelectItem value="fixed">{t("Fixed")}</SelectItem>
                     <SelectItem value="smoothTransition">
-                      Smooth transition
+                      {t("Smooth transition")}
                     </SelectItem>
-                    <SelectItem value="towardPOI">Toward POI</SelectItem>
+                    <SelectItem value="towardPOI">{t("Toward POI")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-xs">Fly-to mode</Label>
+                <Label className="text-xs">{t("Fly-to mode")}</Label>
                 <Select
                   value={missionDefaults.flyToWaylineMode}
                   onValueChange={(v) =>
@@ -569,17 +592,17 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="safely">
-                      Safely (climb then fly)
+                      {t("Safely (climb then fly)")}
                     </SelectItem>
                     <SelectItem value="pointToPoint">
-                      Point to point (direct)
+                      {t("Point to point (direct)")}
                     </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-xs">Finish action</Label>
+                <Label className="text-xs">{t("Finish action")}</Label>
                 <Select
                   value={missionDefaults.finishAction}
                   onValueChange={(v) =>
@@ -590,18 +613,20 @@ export function AccountModal({ onClose }: AccountModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="goHome">Go home</SelectItem>
-                    <SelectItem value="autoLand">Auto land</SelectItem>
+                    <SelectItem value="goHome">{t("Go home")}</SelectItem>
+                    <SelectItem value="autoLand">{t("Auto land")}</SelectItem>
                     <SelectItem value="gotoFirstWaypoint">
-                      Go to first WP
+                      {t("Go to first WP")}
                     </SelectItem>
-                    <SelectItem value="noAction">No action (hover)</SelectItem>
+                    <SelectItem value="noAction">
+                      {t("No action (hover)")}
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div>
-                <Label className="text-xs">RC lost action</Label>
+                <Label className="text-xs">{t("RC lost action")}</Label>
                 <Select
                   value={missionDefaults.executeRCLostAction}
                   onValueChange={(v) =>
@@ -614,9 +639,9 @@ export function AccountModal({ onClose }: AccountModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="goBack">Go back (RTH)</SelectItem>
-                    <SelectItem value="landing">Land</SelectItem>
-                    <SelectItem value="hover">Hover</SelectItem>
+                    <SelectItem value="goBack">{t("Go back (RTH)")}</SelectItem>
+                    <SelectItem value="landing">{t("Land")}</SelectItem>
+                    <SelectItem value="hover">{t("Hover")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -645,7 +670,7 @@ export function AccountModal({ onClose }: AccountModalProps) {
                   className="h-8 text-xs"
                 />
                 <div className="text-[10px] text-muted-foreground mt-0.5">
-                  Speed to fly to first waypoint
+                  {t("Speed to fly to first waypoint")}
                 </div>
               </div>
 

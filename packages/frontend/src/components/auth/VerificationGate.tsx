@@ -2,6 +2,7 @@ import { useState } from "react";
 import { GoogleLogin } from "@react-oauth/google";
 import { useAuthStore } from "@/store/authStore";
 import { Shield } from "lucide-react";
+import { t } from "@/lib/i18n";
 
 export function VerificationGate() {
   const { googleLogin, email, logout } = useAuthStore();
@@ -27,7 +28,7 @@ export function VerificationGate() {
           <Shield className="h-12 w-12 text-primary" />
         </div>
         <div className="space-y-2">
-          <h2 className="text-lg font-semibold">Verify your account</h2>
+          <h2 className="text-lg font-semibold">{t("Verify your account")}</h2>
           <p className="text-sm text-muted-foreground">
             To continue using DroneRoute, please verify your email by signing in
             with Google.
@@ -57,7 +58,7 @@ export function VerificationGate() {
           className="text-xs text-muted-foreground hover:text-primary transition-colors"
           onClick={logout}
         >
-          Sign out instead
+          {t("Sign out instead")}
         </button>
       </div>
     </div>

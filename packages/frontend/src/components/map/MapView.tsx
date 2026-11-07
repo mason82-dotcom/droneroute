@@ -31,6 +31,7 @@ import { AirspaceOverlay } from "./AirspaceOverlay";
 import { CameraFrustum } from "./CameraFrustum";
 import { Triangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { t } from "@/lib/i18n";
 
 interface BuildingPopupData {
   lng: number;
@@ -559,7 +560,7 @@ export function MapView() {
   if (!mapStyle) {
     return (
       <div className="relative h-full w-full flex items-center justify-center bg-background text-muted-foreground">
-        <p>Loading map...</p>
+        <p>{t("Loading map...")}</p>
       </div>
     );
   }
@@ -659,7 +660,7 @@ export function MapView() {
           >
             <div className="flex flex-col gap-2 p-1 min-w-[160px]">
               <div className="text-xs text-zinc-300">
-                <strong className="text-white">Building</strong>
+                <strong className="text-white">{t("Building")}</strong>
                 {buildingPopup.height != null && (
                   <span className="ml-2 text-zinc-400">
                     {buildingPopup.height}m tall
@@ -679,7 +680,7 @@ export function MapView() {
                 }}
               >
                 <Triangle className="h-3 w-3" />
-                Convert to obstacle
+                {t("Convert to obstacle")}
               </Button>
             </div>
           </Popup>
@@ -692,13 +693,13 @@ export function MapView() {
           className={switchButton(baseMap === "street")}
           onClick={() => setBaseMap("street")}
         >
-          Street
+          {t("Street")}
         </button>
         <button
           className={switchButton(baseMap === "satellite")}
           onClick={() => setBaseMap("satellite")}
         >
-          Satellite
+          {t("Satellite")}
         </button>
         {mapSources.extraStyle && (
           <button
