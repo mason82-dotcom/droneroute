@@ -48,6 +48,7 @@ import { usePreferencesStore } from "@/store/preferencesStore";
 import { formatDistance } from "@/lib/units";
 import { useAirspaceStore } from "@/store/airspaceStore";
 import { api } from "@/lib/api";
+import type { Mission } from "@droneroute/shared";
 import { getObstacleWarnings, getAirspaceWarnings } from "@/lib/geo";
 
 type SidebarSection = "waypoints" | "pois" | "obstacles" | "config";
@@ -116,6 +117,29 @@ export default function App() {
       localStorage.getItem("droneroute_trusted") !== "true";
     if (!hasOwnAccount) void trustedLogin();
   }, [configLoaded, trustedNetwork]);
+
+  // Deep link (e.g. from FlightHub Keyless): /?mission=<id> opens a saved mission in the
+  // editor once a session exists. The parameter is removed so a reload does not reopen it.
+  useEffect(() => {
+    if (!token) return;
+    const id = new URLSearchParams(window.location.search).get("mission");
+    if (!id || !/^[0-9a-f-]{8,64}$/i.test(id)) return;
+    window.history.replaceState({}, "", window.location.pathname);
+    api
+      .get<Mission>(`/missions/${encodeURIComponent(id)}`)
+      .then((m) => {
+        loadMission({
+          id: m.id,
+          name: m.name,
+          config: m.config,
+          waypoints: m.waypoints,
+          pois: m.pois ?? [],
+          obstacles: m.obstacles ?? [],
+        });
+        setCurrentPage("editor");
+      })
+      .catch((e) => console.error("Failed to open mission from link:", e));
+  }, [token]);
 
   // Fetch user preferences after auth is restored
   const { fetchPreferences, preferences } = usePreferencesStore();

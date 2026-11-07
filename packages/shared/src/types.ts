@@ -153,7 +153,7 @@ export interface CameraProfile {
   imageHeightPx: number;
 }
 
-// 4/3" 20 MP mapping cameras (Mavic 3E/3M/3D), 24 mm equivalent
+// 4/3" 20 MP mapping cameras (Mavic 3E/3M/3D, Matrice 4E), 24 mm equivalent
 const CAMERA_4_3_20MP: CameraProfile = {
   sensorWidthMm: 17.3,
   sensorHeightMm: 13.0,
@@ -161,7 +161,7 @@ const CAMERA_4_3_20MP: CameraProfile = {
   imageWidthPx: 5280,
   imageHeightPx: 3956,
 };
-// 1/2" 48 MP quad-Bayer wide cameras (Mavic 3T, M30/M30T), 24 mm equivalent.
+// 1/2" 48 MP quad-Bayer wide cameras (Mavic 3T/3TA, M30/M30T), 24 mm equivalent.
 // Resolution of the default 12 MP (binned) photos; 48 MP mode halves the GSD.
 const CAMERA_1_2_48MP: CameraProfile = {
   sensorWidthMm: 6.4,
@@ -170,7 +170,7 @@ const CAMERA_1_2_48MP: CameraProfile = {
   imageWidthPx: 4000,
   imageHeightPx: 3000,
 };
-// 1/1.3" 48 MP quad-Bayer wide cameras (Mavic 3TD, H30/H30T, Mini 4 Pro),
+// 1/1.3" 48 MP quad-Bayer wide cameras (Mavic 3TD, Matrice 4T, H30/H30T, Mini 4 Pro),
 // 24 mm equivalent. Resolution of the default 12 MP (binned) photos.
 const CAMERA_1_1_3_48MP: CameraProfile = {
   sensorWidthMm: 9.7,
@@ -251,6 +251,14 @@ export const DRONE_MODELS: DroneModel[] = [
     ],
   },
   {
+    label: "DJI Mavic 3TA",
+    droneEnumValue: 77,
+    droneSubEnumValue: 3,
+    payloads: [
+      { label: "M3TA Camera", payloadEnumValue: 129, camera: CAMERA_1_2_48MP },
+    ],
+  },
+  {
     label: "DJI M350 RTK",
     droneEnumValue: 89,
     droneSubEnumValue: 0,
@@ -277,6 +285,22 @@ export const DRONE_MODELS: DroneModel[] = [
     droneSubEnumValue: 1,
     payloads: [
       { label: "M3TD Camera", payloadEnumValue: 81, camera: CAMERA_1_1_3_48MP },
+    ],
+  },
+  {
+    label: "DJI Matrice 4E",
+    droneEnumValue: 99,
+    droneSubEnumValue: 0,
+    payloads: [
+      { label: "M4E Camera", payloadEnumValue: 88, camera: CAMERA_4_3_20MP },
+    ],
+  },
+  {
+    label: "DJI Matrice 4T",
+    droneEnumValue: 99,
+    droneSubEnumValue: 1,
+    payloads: [
+      { label: "M4T Camera", payloadEnumValue: 89, camera: CAMERA_1_1_3_48MP },
     ],
   },
   {
