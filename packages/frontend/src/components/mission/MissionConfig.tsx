@@ -18,13 +18,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { DRONE_MODELS } from "@droneroute/shared";
+import { DRONE_MODELS, supportsThermal } from "@droneroute/shared";
 import type {
   HeadingMode,
   FinishAction,
   RCLostAction,
   HeightMode,
   FlyToWaylineMode,
+  ImageFormat,
 } from "@droneroute/shared";
 
 export function MissionConfig() {
@@ -53,6 +54,8 @@ export function MissionConfig() {
                 droneEnumValue: model.droneEnumValue,
                 droneSubEnumValue: model.droneSubEnumValue,
                 payloadEnumValue: model.payloads[0]?.payloadEnumValue || 0,
+                // a lens selection only applies to thermal payloads
+                ...(supportsThermal(model.payloads[0]?.payloadEnumValue || 0) ? {} : { imageFormat: undefined }),
               });
             }
           }}
@@ -78,7 +81,12 @@ export function MissionConfig() {
           <Label className="text-xs">Payload</Label>
           <Select
             value={String(config.payloadEnumValue)}
-            onValueChange={(v) => setConfig({ payloadEnumValue: parseInt(v) })}
+            onValueChange={(v) =>
+              setConfig({
+                payloadEnumValue: parseInt(v),
+                ...(supportsThermal(parseInt(v)) ? {} : { imageFormat: undefined }),
+              })
+            }
           >
             <SelectTrigger className="h-8 text-xs">
               <SelectValue />
@@ -92,6 +100,28 @@ export function MissionConfig() {
                   {p.label}
                 </SelectItem>
               ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {supportsThermal(config.payloadEnumValue) && (
+        <div>
+          <Label className="text-xs">Photo and video lenses</Label>
+          <Select
+            value={config.imageFormat || "default"}
+            onValueChange={(v) =>
+              setConfig({ imageFormat: v === "default" ? undefined : (v as ImageFormat) })
+            }
+          >
+            <SelectTrigger className="h-8 text-xs" title="Which camera stores photos and videos (DJI payloadLensIndex)">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="default">Drone default</SelectItem>
+              <SelectItem value="visable">Visible</SelectItem>
+              <SelectItem value="ir">Thermal</SelectItem>
+              <SelectItem value="visable,ir">Visible + thermal</SelectItem>
             </SelectContent>
           </Select>
         </div>

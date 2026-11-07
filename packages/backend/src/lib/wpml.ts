@@ -49,19 +49,33 @@ function findPoi(
 
 // ── Action XML ───────────────────────────────────────────
 
-function buildActionXml(action: WaypointAction): string {
+const IMAGE_FORMATS: readonly string[] = ["visable", "ir", "visable,ir"];
+/** Valid lens selection or undefined (unknown values are never written). */
+export function lensOf(imageFormat: unknown): string | undefined {
+  return typeof imageFormat === "string" && IMAGE_FORMATS.includes(imageFormat) ? imageFormat : undefined;
+}
+// Same pattern as DJI Pilot 2: explicit lens per action (useGlobalPayloadLensIndex 0).
+function lensXml(lens: string | undefined): string {
+  return lens
+    ? `
+              <wpml:useGlobalPayloadLensIndex>0</wpml:useGlobalPayloadLensIndex>
+              <wpml:payloadLensIndex>${lens}</wpml:payloadLensIndex>`
+    : "";
+}
+
+function buildActionXml(action: WaypointAction, lens?: string): string {
   let paramsXml = "";
 
   switch (action.actionType) {
     case "takePhoto":
       paramsXml = `
               <wpml:payloadPositionIndex>${(action.params as any).payloadPositionIndex ?? 0}</wpml:payloadPositionIndex>
-              <wpml:fileSuffix>${escapeXml((action.params as any).fileSuffix || "")}</wpml:fileSuffix>`;
+              <wpml:fileSuffix>${escapeXml((action.params as any).fileSuffix || "")}</wpml:fileSuffix>${lensXml(lens)}`;
       break;
     case "startRecord":
       paramsXml = `
               <wpml:payloadPositionIndex>${(action.params as any).payloadPositionIndex ?? 0}</wpml:payloadPositionIndex>
-              <wpml:fileSuffix>${escapeXml((action.params as any).fileSuffix || "")}</wpml:fileSuffix>`;
+              <wpml:fileSuffix>${escapeXml((action.params as any).fileSuffix || "")}</wpml:fileSuffix>${lensXml(lens)}`;
       break;
     case "stopRecord":
       paramsXml = `
@@ -125,10 +139,10 @@ function buildActionXml(action: WaypointAction): string {
           </wpml:action>`;
 }
 
-function buildActionGroupXml(wp: Waypoint, groupIdOffset: number): string {
+function buildActionGroupXml(wp: Waypoint, groupIdOffset: number, lens?: string): string {
   if (wp.actions.length === 0) return "";
 
-  const actionsXml = wp.actions.map(buildActionXml).join("");
+  const actionsXml = wp.actions.map(a => buildActionXml(a, lens)).join("");
 
   return `
         <wpml:actionGroup>
@@ -151,7 +165,7 @@ export function buildTemplateKml(mission: Mission): string {
 
   const placemarks = mission.waypoints
     .map((wp, i) => {
-      const actionGroupXml = buildActionGroupXml(wp, i);
+      const actionGroupXml = buildActionGroupXml(wp, i, lensOf(c.imageFormat));
 
       // Build per-waypoint heading param when using towardPOI
       let headingOverrideXml = "";
@@ -235,7 +249,11 @@ export function buildTemplateKml(mission: Mission): string {
       <wpml:waypointHeadingPathMode>followBadArc</wpml:waypointHeadingPathMode>
     </wpml:globalWaypointHeadingParam>
     <wpml:globalWaypointTurnMode>${c.globalTurnMode}</wpml:globalWaypointTurnMode>
-    <wpml:globalUseStraightLine>1</wpml:globalUseStraightLine>${placemarks}
+    <wpml:globalUseStraightLine>1</wpml:globalUseStraightLine>${placemarks}${lensOf(c.imageFormat) ? `
+    <wpml:payloadParam>
+      <wpml:payloadPositionIndex>0</wpml:payloadPositionIndex>
+      <wpml:imageFormat>${lensOf(c.imageFormat)}</wpml:imageFormat>
+    </wpml:payloadParam>` : ""}
   </Folder>
 </Document>
 </kml>`;
@@ -250,7 +268,7 @@ export function buildWaylinesWpml(mission: Mission): string {
 
   const placemarks = mission.waypoints
     .map((wp, i) => {
-      const actionGroupXml = buildActionGroupXml(wp, i);
+      const actionGroupXml = buildActionGroupXml(wp, i, lensOf(c.imageFormat));
       const headingMode = wp.useGlobalHeadingParam
         ? c.globalHeadingMode
         : wp.headingMode || c.globalHeadingMode;
@@ -321,7 +339,8 @@ export function buildWaylinesWpml(mission: Mission): string {
   </wpml:missionConfig>
   <Folder>
     <wpml:templateId>0</wpml:templateId>
-    <wpml:waylineId>0</wpml:waylineId>
+    <wpml:waylineId>0</wpml:waylineId>${c.heightMode === "relativeToStartPoint" ? `
+    <wpml:executeHeightMode>relativeToStartPoint</wpml:executeHeightMode>` : ""}
     <wpml:autoFlightSpeed>${c.autoFlightSpeed}</wpml:autoFlightSpeed>
     <wpml:waylineCoordinateSysParam>
       <wpml:coordinateMode>WGS84</wpml:coordinateMode>

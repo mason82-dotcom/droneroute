@@ -123,6 +123,11 @@ export async function parseKmz(buffer: Buffer): Promise<{
     if (!hasWaypoints(folder)) folder = templateFolder;
   }
 
+  // Lens selection (Pilot 2 writes it to the template Folder as payloadParam/imageFormat).
+  const payloadParam = templateFolder?.["wpml:payloadParam"];
+  const imageFormat = String((Array.isArray(payloadParam) ? payloadParam[0] : payloadParam)?.["wpml:imageFormat"] ?? "");
+  if (["visable", "ir", "visable,ir"].includes(imageFormat)) config.imageFormat = imageFormat as MissionConfig["imageFormat"];
+
   if (folder) {
     config.autoFlightSpeed = parseFloat(folder["wpml:autoFlightSpeed"] || "7");
     config.gimbalPitchMode =

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { sha256Hex } from "@/lib/sha256";
 import { toast } from "sonner";
+import { WpmlCheck, useWpmlIssues } from "@/components/mission/WpmlCheck";
 import {
   Download,
   Upload,
@@ -22,6 +23,7 @@ import {
   CircleHelp,
   Triangle,
   Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,7 +53,7 @@ import { api } from "@/lib/api";
 import type { Mission } from "@droneroute/shared";
 import { getObstacleWarnings, getAirspaceWarnings } from "@/lib/geo";
 
-type SidebarSection = "waypoints" | "pois" | "obstacles" | "config";
+type SidebarSection = "waypoints" | "pois" | "obstacles" | "config" | "check";
 
 export default function App() {
   const {
@@ -79,7 +81,11 @@ export default function App() {
     pois: false,
     obstacles: false,
     config: false,
+    check: false,
   });
+  const wpmlIssues = useWpmlIssues();
+  const wpmlErrors = wpmlIssues.filter((i) => i.level === "error").length;
+  const wpmlWarnings = wpmlIssues.length - wpmlErrors;
 
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
@@ -278,6 +284,12 @@ export default function App() {
   const handleExport = async () => {
     if (waypoints.length < 2) {
       toast.warning("Need at least 2 waypoints to export");
+      return;
+    }
+
+    if (wpmlErrors) {
+      setExpandedSections((prev) => ({ ...prev, check: true }));
+      toast.error(`Export blocked: ${wpmlErrors} ${wpmlErrors === 1 ? "field violates" : "fields violate"} the DJI WPML reference – see DJI check`);
       return;
     }
 
@@ -680,6 +692,32 @@ export default function App() {
             {expandedSections.config && (
               <div className="max-h-[40vh] overflow-y-auto section-expand">
                 <MissionConfig />
+              </div>
+            )}
+          </div>
+
+          {/* DJI WPML check — red/amber/green by result */}
+          <div
+            className={`border-l-2 ${wpmlErrors ? "border-red-500/70 bg-red-500/[0.03]" : wpmlWarnings ? "border-amber-500/70 bg-amber-500/[0.03]" : "border-emerald-500/70 bg-emerald-500/[0.03]"}`}
+          >
+            <button
+              className={`flex items-center gap-2 w-full px-3 py-2 text-xs font-semibold uppercase tracking-wider ${wpmlErrors ? "bg-red-500/10 hover:bg-red-500/15 text-red-400" : wpmlWarnings ? "bg-amber-500/10 hover:bg-amber-500/15 text-amber-400" : "bg-emerald-500/10 hover:bg-emerald-500/15 text-emerald-400"}`}
+              onClick={() => toggleSection("check")}
+              aria-expanded={expandedSections.check}
+              title="Checks all fields against the DJI WPML reference before export"
+            >
+              {expandedSections.check ? (
+                <ChevronDown className="h-3 w-3" />
+              ) : (
+                <ChevronRight className="h-3 w-3" />
+              )}
+              <ShieldCheck className="h-3 w-3" />
+              DJI check
+              {wpmlErrors || wpmlWarnings ? ` (${[wpmlErrors ? `${wpmlErrors} ${wpmlErrors === 1 ? "error" : "errors"}` : "", wpmlWarnings ? `${wpmlWarnings} ${wpmlWarnings === 1 ? "warning" : "warnings"}` : ""].filter(Boolean).join(", ")})` : ""}
+            </button>
+            {expandedSections.check && (
+              <div className="max-h-[30vh] overflow-y-auto section-expand">
+                <WpmlCheck issues={wpmlIssues} />
               </div>
             )}
           </div>

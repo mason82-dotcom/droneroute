@@ -427,6 +427,16 @@ export interface Waypoint {
 
 // ── Mission Config ───────────────────────────────────────
 
+// ── Camera lenses for photo/video actions ───────────────
+// WPML lens values as written by DJI Pilot 2 (note DJI's spelling "visable"); several lenses are
+// comma-separated, e.g. "visable,ir". Observed in Pilot 2 routes for M3E/M3T/M4T (payload 66/67/89).
+export type ImageFormat = "visable" | "ir" | "visable,ir";
+/** Payloads with a thermal (IR) camera: H20T, M30T, M3T, M3TD, H30T, M4T, M3TA. */
+export const THERMAL_PAYLOAD_VALUES: readonly number[] = [43, 53, 67, 81, 83, 89, 129];
+export function supportsThermal(payloadEnumValue: number): boolean {
+  return THERMAL_PAYLOAD_VALUES.includes(payloadEnumValue);
+}
+
 export interface MissionConfig {
   droneEnumValue: number;
   droneSubEnumValue: number;
@@ -443,6 +453,8 @@ export interface MissionConfig {
   globalHeadingMode: HeadingMode;
   globalTurnMode: TurnMode;
   gimbalPitchMode: GimbalPitchMode;
+  /** Lenses used by photo/video actions (thermal payloads only). Unset = DJI default (visible). */
+  imageFormat?: ImageFormat;
 }
 
 // ── Mission ──────────────────────────────────────────────
@@ -651,3 +663,6 @@ export const DEFAULT_MAP_SOURCES: MapSourcesConfig = {
   },
   geocoderUrl: "https://photon.komoot.io/api/",
 };
+
+export { validateMission } from "./wpmlValidation.js";
+export type { ValidationIssue, IssueLevel } from "./wpmlValidation.js";
