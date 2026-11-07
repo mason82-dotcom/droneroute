@@ -57,12 +57,10 @@ kmzRoutes.post(
         (i) => i.level === "error",
       );
       if (wpmlErrors.length) {
-        res
-          .status(422)
-          .json({
-            error: "Mission violates the DJI WPML specification",
-            issues: wpmlErrors,
-          });
+        res.status(422).json({
+          error: "Mission violates the DJI WPML specification",
+          issues: wpmlErrors,
+        });
         return;
       }
       const buffer = await generateKmzBuffer(mission);
@@ -113,12 +111,10 @@ kmzRoutes.get(
         (i) => i.level === "error",
       );
       if (wpmlErrors.length) {
-        res
-          .status(422)
-          .json({
-            error: "Mission violates the DJI WPML specification",
-            issues: wpmlErrors,
-          });
+        res.status(422).json({
+          error: "Mission violates the DJI WPML specification",
+          issues: wpmlErrors,
+        });
         return;
       }
       const buffer = await generateKmzBuffer(mission);
