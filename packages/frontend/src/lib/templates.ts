@@ -121,10 +121,7 @@ export interface PencilParams {
 }
 
 export type TemplateParams =
-  | OrbitParams
-  | GridParams
-  | FacadeParams
-  | PencilParams;
+  OrbitParams | GridParams | FacadeParams | PencilParams;
 
 export interface TemplateResult {
   waypoints: Omit<Waypoint, "index" | "name">[];
