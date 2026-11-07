@@ -128,10 +128,18 @@ export function validateMission(mission: Mission): ValidationIssue[] {
     );
 
   oneOf("heightMode", c.heightMode, ENUMS.heightMode);
+  // DroneRoute exports executable routes for DJI Pilot 2 with heights relative to the start point.
+  // EGM96 would need an EGM96 -> WGS84 geoid conversion for waylines.wpml (about 48 m in Germany),
+  // which DroneRoute does not do; aboveGroundLevel is FlightHub 2 only (DJI WPML reference).
   if (c.heightMode === "aboveGroundLevel")
-    warn(
+    err(
       "heightMode",
-      "aboveGroundLevel is only supported by FlightHub 2 (DJI); for DJI Pilot 2 use relativeToStartPoint or EGM96",
+      "aboveGroundLevel is only supported by FlightHub 2 (DJI) and cannot be exported for DJI Pilot 2; switch the height reference to relative to start and check the waypoint heights",
+    );
+  else if (c.heightMode === "EGM96")
+    err(
+      "heightMode",
+      "EGM96 heights cannot be exported: waylines.wpml would need WGS84 ellipsoid heights (about 48 m different in Germany); switch the height reference to relative to start and check the waypoint heights",
     );
   oneOf(
     "globalWaypointHeadingParam.waypointHeadingMode",
@@ -166,6 +174,13 @@ export function validateMission(mission: Mission): ValidationIssue[] {
     if (!isNum(w.longitude) || w.longitude < -180 || w.longitude > 180)
       err(f("longitude"), "must be −180…180°");
     if (!isNum(w.height)) err(f("height"), "missing height");
+    // EU open category: 120 m above ground. A height far above it relative to the start point is
+    // usually a leftover absolute (EGM96) height after switching the height reference.
+    else if (c.heightMode === "relativeToStartPoint" && w.height > 120)
+      warn(
+        f("height"),
+        `${w.height} m above the start point exceeds the EU open-category limit of 120 m; check whether this is still an absolute (sea level) height`,
+      );
     if (!w.useGlobalSpeed && (!isNum(w.speed) || w.speed <= 0))
       err(f("waypointSpeed"), "must be > 0 m/s (DJI)");
     if (!w.useGlobalHeadingParam) {
