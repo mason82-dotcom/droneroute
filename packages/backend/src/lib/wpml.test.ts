@@ -1,4 +1,5 @@
 import { describe, it, expect } from "vitest";
+import JSZip from "jszip";
 import {
   DEFAULT_MISSION_CONFIG,
   DEFAULT_WAYPOINT,
@@ -311,5 +312,31 @@ describe("defaults", () => {
     expect(values(buildWaylinesWpml(m), "executeHeightMode")).toEqual([
       "relativeToStartPoint",
     ]);
+  });
+});
+
+describe("KMZ layout", () => {
+  it("packs template.kml, waylines.wpml and res/ inside wpmz/ like DJI Pilot 2", async () => {
+    const zip = await JSZip.loadAsync(
+      await generateKmzBuffer(mission([wp(0), wp(1)])),
+    );
+    const names = Object.keys(zip.files).sort();
+    expect(names).toEqual([
+      "wpmz/",
+      "wpmz/res/",
+      "wpmz/template.kml",
+      "wpmz/waylines.wpml",
+    ]);
+  });
+
+  it("still imports the older root layout", async () => {
+    const m = mission([wp(0), wp(1)]);
+    const old = new JSZip();
+    old.file("template.kml", buildTemplateKml(m));
+    old.file("waylines.wpml", buildWaylinesWpml(m));
+    const parsed = await parseKmz(
+      await old.generateAsync({ type: "nodebuffer" }),
+    );
+    expect(parsed.waypoints).toHaveLength(2);
   });
 });
