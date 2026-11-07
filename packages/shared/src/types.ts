@@ -594,7 +594,8 @@ export const DEFAULT_MISSION_CONFIG: MissionConfig = {
   globalTransitionalSpeed: 10,
   autoFlightSpeed: 7,
   maxBatteryMinutes: 25,
-  heightMode: "aboveGroundLevel",
+  // DJI Pilot 2 does not support aboveGroundLevel (FlightHub 2 only, DJI WPML reference).
+  heightMode: "relativeToStartPoint",
   globalHeadingMode: "followWayline",
   globalTurnMode: "toPointAndStopWithDiscontinuityCurvature",
   gimbalPitchMode: "usePointSetting",

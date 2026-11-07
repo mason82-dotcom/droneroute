@@ -27,7 +27,7 @@ Configure your drone model, camera, altitude reference, and safety options for t
 
 - The available cameras change depending on which drone you select.
 - If the estimated flight time exceeds the battery limit you set, a warning appears.
-- Height reference affects how altitude values are interpreted by the drone — choose the one that matches your operational needs. The default is **above ground level**.
+- Height reference affects how altitude values are interpreted by the drone — choose the one that matches your operational needs. The default is **relative to start** (relative to the takeoff point): DJI documents _above ground level_ as FlightHub 2 only, so DJI Pilot 2 and DJI Fly would not fly it as planned.
 - All height fields enforce a minimum of 1 meter.
 - For drones with a thermal camera (M3T, M3TA, M4T, M30T, M3TD, H20T, H30T) you can choose which lenses store photos and videos: visible, thermal or both. This is written the same way DJI Pilot 2 writes it.
 - **DJI check**: below the settings, every field is checked against the DJI WPML reference (value ranges, allowed values, required combinations such as turn distances shorter than the segment). Errors block the KMZ export; warnings (for example _above ground level_, which DJI only supports in FlightHub 2, not in DJI Pilot 2) are shown but do not block it.

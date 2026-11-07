@@ -303,3 +303,13 @@ describe("DJI WPML validation", async () => {
     ]);
   });
 });
+
+describe("defaults", () => {
+  it("new missions use a height reference DJI Pilot 2 supports", () => {
+    expect(DEFAULT_MISSION_CONFIG.heightMode).toBe("relativeToStartPoint");
+    const m = mission([wp(0), wp(1)]);
+    expect(values(buildWaylinesWpml(m), "executeHeightMode")).toEqual([
+      "relativeToStartPoint",
+    ]);
+  });
+});
