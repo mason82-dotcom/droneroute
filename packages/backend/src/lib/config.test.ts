@@ -95,6 +95,36 @@ describe("resolveMapSources", () => {
     });
   });
 
+  it("adds a toggleable overlay over all base maps", () => {
+    const sources = resolveMapSources({
+      MAP_OVERLAY_TILES:
+        "https://example.org/wms?SERVICE=WMS&REQUEST=GetMap&BBOX={bbox-epsg-3857}",
+      MAP_OVERLAY_NAME: "UAS geozones",
+      MAP_OVERLAY_ATTRIBUTION: "© Example",
+      MAP_OVERLAY_BOUNDS: "5.8,47.2,15.1,55.1",
+      MAP_OVERLAY_OPACITY: "0.5",
+    });
+    expect(sources.overlay).toEqual({
+      name: "UAS geozones",
+      tiles:
+        "https://example.org/wms?SERVICE=WMS&REQUEST=GetMap&BBOX={bbox-epsg-3857}",
+      attribution: "© Example",
+      bounds: [5.8, 47.2, 15.1, 55.1],
+      tileSize: 256,
+      maxzoom: 22,
+      opacity: 0.5,
+    });
+    expect(
+      resolveMapSources({
+        MAP_OVERLAY_TILES: "https://example.org/{z}/{x}/{y}.png",
+        MAP_OVERLAY_OPACITY: "7",
+      }).overlay?.opacity,
+    ).toBe(0.6);
+    expect(
+      resolveMapSources({ MAP_OVERLAY_TILES: "javascript:alert(1)" }).overlay,
+    ).toBeNull();
+  });
+
   it("drops invalid bounds but keeps the layer", () => {
     const sources = resolveMapSources({
       MAP_ORTHOPHOTO_TILES: "https://example.org/{z}/{x}/{y}.png",

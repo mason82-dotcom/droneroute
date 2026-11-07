@@ -527,6 +527,14 @@ export interface RasterLayerConfig {
   maxzoom: number;
 }
 
+/** A raster layer drawn over every base map and toggled in the style switcher. */
+export interface OverlayLayerConfig extends RasterLayerConfig {
+  /** Label of the toggle, e.g. "UAS geozones". */
+  name: string;
+  /** Raster opacity between 0.1 and 1. */
+  opacity: number;
+}
+
 /** An additional, selectable base map style. */
 export interface ExtraMapStyle {
   name: string;
@@ -552,6 +560,8 @@ export interface MapSourcesConfig {
   orthophoto: RasterLayerConfig | null;
   /** Optional additional base map style. */
   extraStyle: ExtraMapStyle | null;
+  /** Optional raster overlay over all base maps (e.g. drone geozones). */
+  overlay: OverlayLayerConfig | null;
   terrain: {
     tiles: string;
     encoding: "terrarium" | "mapbox";
@@ -629,6 +639,7 @@ export const DEFAULT_MAP_SOURCES: MapSourcesConfig = {
     maxzoom: 19,
   },
   orthophoto: null,
+  overlay: null,
   extraStyle: null,
   terrain: {
     tiles: "https://tiles.mapterhorn.com/{z}/{x}/{y}.webp",

@@ -4,6 +4,7 @@ import {
   DEFAULT_MAP_VIEW,
   type MapSourcesConfig,
   type MapViewState,
+  type OverlayLayerConfig,
   type RasterLayerConfig,
 } from "@droneroute/shared";
 
@@ -126,6 +127,23 @@ export function resolveMapSources(
       }
     : null;
 
+  const overlayTiles = httpUrl(env.MAP_OVERLAY_TILES);
+  const opacity = Number(env.MAP_OVERLAY_OPACITY);
+  const overlay: OverlayLayerConfig | null = overlayTiles
+    ? {
+        name: text(env.MAP_OVERLAY_NAME, "Overlay"),
+        tiles: overlayTiles,
+        attribution: text(env.MAP_OVERLAY_ATTRIBUTION, ""),
+        bounds: bounds(env.MAP_OVERLAY_BOUNDS),
+        tileSize: intInRange(env.MAP_OVERLAY_TILE_SIZE, 64, 1024, 256),
+        maxzoom: intInRange(env.MAP_OVERLAY_MAXZOOM, 1, 24, 22),
+        opacity:
+          Number.isFinite(opacity) && opacity >= 0.1 && opacity <= 1
+            ? opacity
+            : 0.6,
+      }
+    : null;
+
   const extraUrl = httpUrl(env.MAP_EXTRA_STYLE_URL);
   const extraStyle = extraUrl
     ? { name: text(env.MAP_EXTRA_STYLE_NAME, "Map"), url: extraUrl }
@@ -146,6 +164,7 @@ export function resolveMapSources(
     imagery,
     orthophoto,
     extraStyle,
+    overlay,
     terrain: terrainTiles
       ? {
           tiles: terrainTiles,

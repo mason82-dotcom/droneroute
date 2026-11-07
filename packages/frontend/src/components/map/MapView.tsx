@@ -464,6 +464,16 @@ export function MapView() {
       : baseMap === "extra" && mapSources.extraStyle
         ? mapSources.extraStyle.url
         : satelliteStyle;
+  const overlay = mapSources.overlay;
+  const [overlayOn, setOverlayOn] = useState(
+    () => localStorage.getItem("droneroute_overlay") !== "off",
+  );
+  const toggleOverlay = () => {
+    setOverlayOn((on) => {
+      localStorage.setItem("droneroute_overlay", on ? "off" : "on");
+      return !on;
+    });
+  };
   const [is3D, setIs3D] = useState(vizPrefs?.viewMode === "3d");
   const [buildingPopup, setBuildingPopup] = useState<BuildingPopupData | null>(
     null,
@@ -593,6 +603,23 @@ export function MapView() {
           maxzoom={mapSources.terrain.maxzoom}
           attribution={mapSources.terrain.attribution}
         />
+        {overlay && overlayOn && (
+          <Source
+            id="map-overlay"
+            type="raster"
+            tiles={[overlay.tiles]}
+            tileSize={overlay.tileSize}
+            maxzoom={overlay.maxzoom}
+            attribution={overlay.attribution}
+            {...(overlay.bounds ? { bounds: overlay.bounds } : {})}
+          >
+            <Layer
+              id="map-overlay"
+              type="raster"
+              paint={{ "raster-opacity": overlay.opacity }}
+            />
+          </Source>
+        )}
         <FitBoundsOnLoad />
         <GeocoderControl />
         <SceneSetup is3D={is3D} styleKey={baseMap} />
@@ -680,6 +707,19 @@ export function MapView() {
           >
             {mapSources.extraStyle.name}
           </button>
+        )}
+        {overlay && (
+          <>
+            <div className="w-px bg-border mx-1" />
+            <button
+              className={switchButton(overlayOn)}
+              onClick={toggleOverlay}
+              aria-pressed={overlayOn}
+              title={`${overlayOn ? "Hide" : "Show"} ${overlay.name}`}
+            >
+              {overlay.name}
+            </button>
+          </>
         )}
         <div className="w-px bg-border mx-1" />
         <button className={switchButton(!is3D)} onClick={() => setIs3D(false)}>
