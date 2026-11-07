@@ -361,6 +361,20 @@ describe("height reference export", () => {
     }
   });
 
+  it("explains imported execution heights (WGS84, terrain following) instead of a bare enum error", async () => {
+    const { validateMission } = await import("@droneroute/shared");
+    for (const [mode, text] of [
+      ["WGS84", /ellipsoid/],
+      ["realTimeFollowSurface", /terrain following/],
+    ] as const) {
+      const m = mission([wp(0), wp(1)]);
+      m.config = { ...m.config, heightMode: mode as never };
+      const issues = validateMission(m).filter((i) => i.field === "heightMode");
+      expect(issues).toHaveLength(1);
+      expect(issues[0].message).toMatch(text);
+    }
+  });
+
   it("warns about relative heights above 120 m (leftover sea-level heights)", async () => {
     const { validateMission } = await import("@droneroute/shared");
     const m = mission([wp(0, { height: 350 }), wp(1, { height: 100 })]);

@@ -127,7 +127,20 @@ export function validateMission(mission: Mission): ValidationIssue[] {
       `payload ${c.payloadEnumValue} does not belong to ${model.label}`,
     );
 
-  oneOf("heightMode", c.heightMode, ENUMS.heightMode);
+  // Waypoints imported from a DJI Pilot 2 execution file (waylines.wpml, e.g. mapping routes) carry
+  // its executeHeightMode instead of a template height reference.
+  const imported = String(c.heightMode);
+  if (imported === "WGS84")
+    err(
+      "heightMode",
+      "heights were imported from waylines.wpml as WGS84 ellipsoid heights and cannot be exported; use the route in DJI Pilot 2 directly or re-plan it relative to start",
+    );
+  else if (imported === "realTimeFollowSurface")
+    err(
+      "heightMode",
+      "real-time terrain following (DJI Pilot 2 mapping route) cannot be exported; use the route in DJI Pilot 2 directly or re-plan it relative to start",
+    );
+  else oneOf("heightMode", c.heightMode, ENUMS.heightMode);
   // DroneRoute exports executable routes for DJI Pilot 2 with heights relative to the start point.
   // EGM96 would need an EGM96 -> WGS84 geoid conversion for waylines.wpml (about 48 m in Germany),
   // which DroneRoute does not do; aboveGroundLevel is FlightHub 2 only (DJI WPML reference).
